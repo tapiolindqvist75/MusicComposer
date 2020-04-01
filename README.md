@@ -7,6 +7,7 @@ Application / library which generates random music
 Initial release composes random music using some rudimentary music theory rules. Rules currently include 
 -	It is more likely that pitch of concecutive notes is closer to each other
 -	last note of each measure is more likely to be eiter Tonic, Mediant or Dominant. 
+
 Program generates MusicXml file. File has been made and tested only with MuseScore application. Music is generated only in C-major and C-minor. 
 
 ## Future versions
