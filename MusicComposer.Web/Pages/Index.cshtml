@@ -1,0 +1,49 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+    <div class="text-left">
+        <h1 class="display-3">Music Composer</h1>
+        <p>To see the source code visit <a href="https://github.com/tapiolindqvist75/MusicComposer">https://github.com/tapiolindqvist75/MusicComposer</a></p>
+        <br />
+        @if (Model.SongTitle == null)
+        {
+            <p>Write your name on the box below and I will generate short song for you.</p>
+            <form method="post">
+                Name:
+                <input asp-for="Name" />
+                <input type="hidden" asp-for="Form" value="create" />
+                <input value="Create Jingle" type="submit" />
+            </form>
+        }
+        @if (Model.SongTitle != null)
+        {
+            <p>I created a song called @Model.SongTitle for @Model.Name</p>
+            <form method="post">
+                <input asp-for="Name" type="hidden" />
+                <input asp-for="SongTitle" type="hidden" />
+                <input type="hidden" asp-for="Form" value="download" />
+                <input value="Download MusicXml" type="submit" />
+            </form>
+            <br />
+            <form method="post">
+                <input asp-for="Name" type="hidden" />
+                <input asp-for="SongTitle" type="hidden" />
+                <input type="radio" name="rating" asp-for="Rating" value="1" />1 (bad)<br />
+                <input type="radio" name="rating" asp-for="Rating" value="2" />2<br />
+                <input type="radio" name="rating" asp-for="Rating" value="3" />3<br />
+                <input type="radio" name="rating" asp-for="Rating" value="4" />4<br />
+                <input type="radio" name="rating" asp-for="Rating" value="5" />5 (good)<br />
+                <input type="hidden" asp-for="Form" value="rating" />
+                <br />
+                <input value="Rate" type="submit" />
+            </form>
+            <br /><br />
+            <form method="post">
+                <input type="hidden" asp-for="Form" value="reset"/>
+                <input value="Reset" type="submit"/>
+            </form>
+        }
+    </div>

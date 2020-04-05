@@ -62,17 +62,18 @@ namespace MusicComposerLibrary.MusicXml
             return measures.ToArray();
         }
                         
-        public void CreateMusicXml(Stream target, string songTitle)
+        public void CreateMusicXml(Stream target, string name, string songName)
         {
             XmlSerializer xmlSerializer = new XmlSerializer(typeof(scorepartwise));
             scorepartwise root = new scorepartwise() { version = "3.1" };
-            root.work = new work() { worktitle = songTitle };
+            root.work = new work() { worktitle = songName };
             root.identification = new identification()
             {
                 creator = new typedtext[]
                 {
                     new typedtext() { type = "composer", Value = "MusicComposer" },
-                    new typedtext() { type = "programmer", Value = "Tapio Lindqvist" }
+                    new typedtext() { type = "programmer", Value = "Tapio Lindqvist" },
+                    new typedtext() { type = "clicker", Value = name }
                 }
             };
             root.partlist = new partlist()

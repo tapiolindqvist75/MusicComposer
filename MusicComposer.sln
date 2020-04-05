@@ -7,7 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MusicComposerLibrary", "Mus
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MusicComposer", "MusicComposer\MusicComposer.csproj", "{E70492F7-3047-4298-99AF-36D92B382552}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusicComposer.UnitTests", "MusicComposer.UnitTests\MusicComposer.UnitTests.csproj", "{5A700968-17AE-4AF6-9999-4A1D90317D86}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MusicComposer.UnitTests", "MusicComposer.UnitTests\MusicComposer.UnitTests.csproj", "{5A700968-17AE-4AF6-9999-4A1D90317D86}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusicComposer.Web", "MusicComposer.Web\MusicComposer.Web.csproj", "{8C75C971-10BF-45D9-A773-60C4FDC7B4AD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{5A700968-17AE-4AF6-9999-4A1D90317D86}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5A700968-17AE-4AF6-9999-4A1D90317D86}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5A700968-17AE-4AF6-9999-4A1D90317D86}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C75C971-10BF-45D9-A773-60C4FDC7B4AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C75C971-10BF-45D9-A773-60C4FDC7B4AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C75C971-10BF-45D9-A773-60C4FDC7B4AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C75C971-10BF-45D9-A773-60C4FDC7B4AD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

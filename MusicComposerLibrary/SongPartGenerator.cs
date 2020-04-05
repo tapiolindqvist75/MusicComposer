@@ -1,5 +1,6 @@
 ﻿using Music.Core;
 using Music.Core.Scales.Diatonic;
+using MusicComposerLibrary.Storage;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,22 +10,41 @@ namespace MusicComposerLibrary
 {
     public class SongPartGenerator
     {
-        const int PART_LENGTH = 4;
         public decimal TotalLength { get; set; }
         public List<Structures.NoteDuration> NoteDurations { get; private set; }
         private List<decimal> _beatStops;
         private decimal _measureLength;
         private WeightedRandom _weightedRandom;
-        public SongPartGenerator(int partLengthInMeasures, int beatsPerBar, Structures.NoteDuration.NoteLengthType beatUnit)
+        private ScaleBase _scale;
+        public SongData SongData { get; private set; }
+
+        public SongPartGenerator(SongData songData)
         {
-            _weightedRandom = new WeightedRandom();
+            if (songData == null)
+                throw new ArgumentNullException(nameof(songData));
+            if (string.IsNullOrWhiteSpace(songData.Name))
+                throw new ArgumentException($"{nameof(songData.Name)} is empty or null");
+            if (string.IsNullOrWhiteSpace(songData.SongName))
+                throw new ArgumentException($"{nameof(songData.SongName)} is empty or null");
+            if (songData.PartLength <= 0)
+                throw new ArgumentException($"{nameof(songData.PartLength)} must be positive value");
+            if (songData.Major)
+                _scale = new IonianScale(MusicNotes.FromString(songData.ScaleKey));
+            else
+                _scale = new AeolianScale(MusicNotes.FromString(songData.ScaleKey));
+            if (songData.BeatsPerMeasure <= 0)
+                throw new ArgumentException($"{nameof(songData.BeatsPerMeasure)} must be positive value");
+            if (songData.Values == null)
+                throw new ArgumentNullException(nameof(songData.Values));
+            SongData = songData;
+            _weightedRandom = new WeightedRandom(songData.Values);
             TotalLength = 0;
             NoteDurations = new List<Structures.NoteDuration>();
             _beatStops = new List<decimal>();
             decimal stopPosition = 0;
-            for (int beatLoop = 0; beatLoop < beatsPerBar; beatLoop++)
+            for (int beatLoop = 0; beatLoop < songData.BeatsPerMeasure; beatLoop++)
             {
-                switch (beatUnit)
+                switch (songData.BeatUnit)
                 {
                     case Structures.NoteDuration.NoteLengthType.Half:
                         stopPosition += 0.5M;
@@ -41,7 +61,6 @@ namespace MusicComposerLibrary
                 _beatStops.Add(stopPosition);
             }
             _measureLength = stopPosition;
-
         }
 
         public decimal RemainingBeforeStop()
@@ -65,8 +84,8 @@ namespace MusicComposerLibrary
         public void AddNote(decimal duration, bool tie)
         {
             //Total length exceeded, adjust to maximum length
-            if (duration + TotalLength > PART_LENGTH)
-                AddNote(PART_LENGTH - TotalLength, false);
+            if (duration + TotalLength > SongData.PartLength)
+                AddNote(SongData.PartLength - TotalLength, false);
             else
             {
                 decimal remainingBeforeStop = RemainingBeforeStop();
@@ -97,21 +116,21 @@ namespace MusicComposerLibrary
                 }
             }
         }
-        private List<Structures.Note> AddMelody(WeightedRandom weightedRandom, List<Structures.NoteDuration> noteDurations, out ScaleBase scale)
+        private List<Structures.Note> AddMelody(WeightedRandom weightedRandom, List<Structures.NoteDuration> noteDurations)
         {
             List<Structures.Note> notes = new List<Structures.Note>();
             int? latestNote = null;
-            bool major = weightedRandom.GetRandomBool();
+            bool major = _scale is IonianScale ? true : false;
             int[] lastNoteOfMeasureWeights = major ? Weights.Instance.GetMajorWeightsLastNote() : Weights.Instance.GetMinorWeightsLastNote();
             int[] middleNoteOfMeasureWeights = major ? Weights.Instance.GetMajorWeightsMiddleNote() : Weights.Instance.GetMinorWeightsMiddleNote();
-            scale = major ? (ScaleBase)new IonianScale(MusicNotes.C) : new AeolianScale(MusicNotes.C);
+            
             Dictionary<int, int> noteDistanceWeights = Weights.Instance.NoteDistanceWeights;
             foreach (Structures.NoteDuration noteDuration in noteDurations)
             {
                 //Splitted note continue with same scalenote
                 if (noteDuration.Tie == Structures.NoteDuration.TieType.Both || noteDuration.Tie == Structures.NoteDuration.TieType.End)
                 {
-                    notes.Add(NoteFactory.GetNoteByScaleNote(noteDuration, scale.ChromaticNotes[latestNote.Value]));
+                    notes.Add(NoteFactory.GetNoteByScaleNote(noteDuration, _scale.ChromaticNotes[latestNote.Value]));
                     continue;
                 }
                 List<int> adjustedWeights;
@@ -132,29 +151,37 @@ namespace MusicComposerLibrary
                 }
                 int noteIndex = weightedRandom.GetRandomIndex(adjustedWeights);
                 latestNote = noteIndex;
-                ScaleNote scaleNote = scale.ChromaticNotes[noteIndex];
+                ScaleNote scaleNote = _scale.ChromaticNotes[noteIndex];
                 notes.Add(NoteFactory.GetNoteByScaleNote(noteDuration, scaleNote));
             }
             //Last note on key
             Structures.Note lastNote = notes.Last();
-            lastNote.Name = scale.Notes[0].Note.Name[0];
+            lastNote.Name = _scale.Notes[0].Note.Name[0];
             lastNote.Offset = 0;
             return notes;
         }
 
-        public void CreateSongPart(Stream target, string songTitle)
+        public List<Structures.Note> CreateSongPart()
         {
-            while (TotalLength < PART_LENGTH)
+            _weightedRandom.Reset();
+            TotalLength = 0;
+            NoteDurations = new List<Structures.NoteDuration>();
+            while (TotalLength < SongData.PartLength)
             {
                 Structures.NoteDuration.NoteLengthType noteLengthType = _weightedRandom.GetRandomKey<Structures.NoteDuration.NoteLengthType>(Weights.Instance.LengthWeights);
                 decimal duration = new Structures.NoteDuration(noteLengthType, false, Structures.NoteDuration.TieType.None, false).Duration;
                 AddNote(duration, false);
             }
-            List<Structures.Note> notes = AddMelody(_weightedRandom, NoteDurations, out ScaleBase scale);
+            List<Structures.Note> notes = AddMelody(_weightedRandom, NoteDurations);
+            return notes;
+        }
+
+        public void WriteMusicXmlToStream(List<Structures.Note> notes, Stream target)
+        {
             MusicXml.Generator musicXmlCreator = new MusicXml.Generator();
-            int fifts = scale.Notes.Sum(n => n.Note.Label.Offset);
+            int fifts = _scale.Notes.Sum(n => n.Note.Label.Offset);
             musicXmlCreator.AddMeasures(fifts, notes);
-            musicXmlCreator.CreateMusicXml(target, songTitle);
+            musicXmlCreator.CreateMusicXml(target, SongData.Name, SongData.SongName);
         }
     }
 }

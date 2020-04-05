@@ -8,21 +8,23 @@ namespace MusicComposerLibrary
     {
         double[] _randomValues;
         int _index;
-        
-        public WeightedRandom()
+        const int COUNT = 50;
+        public WeightedRandom(double[] values)
         {
-            _randomValues = new double[100];
-            Random random = new Random();
-            for (int loop = 0; loop < 100; loop++)
-                _randomValues[loop] = random.NextDouble();
+            _randomValues = values;
             _index = 0;
         }
-
+        public void Reset()
+        {
+            _index = 0;
+        }
         public T GetRandomKey<T>(Dictionary<T, int> weights)
         {
             int totalWeights = weights.Values.Sum();
             double randomDbl = (double)totalWeights * _randomValues[_index];
             _index++;
+            if (_index >= COUNT)
+                _index = 0;
             int randomInt = Convert.ToInt32(Math.Floor(randomDbl));
             foreach(T key in weights.Keys)
             {
@@ -32,7 +34,6 @@ namespace MusicComposerLibrary
             }
             return weights.Keys.Last();
         }
-
         public int GetRandomIndex(List<int> weights)
         {
             int totalWeights = weights.Sum();
@@ -47,12 +48,19 @@ namespace MusicComposerLibrary
             }
             return weights.Count - 1;    
         }
-
         public bool GetRandomBool()
         {
             bool random = _randomValues[_index] < 0.5;
             _index++;
             return random;
+        }
+        public static double[] GetRandomValues()
+        {
+            double[] randomValues = new double[100];
+            Random random = new Random();
+            for (int loop = 0; loop < COUNT; loop++)
+                randomValues[loop] = random.NextDouble();
+            return randomValues;
         }
     }
 }
