@@ -43,7 +43,7 @@ namespace MusicComposerLibrary.Storage.Azure
                 RowKey = song.SongName,
                 Data = SongData.Serialize(song)
             };
-            _songTable.Execute(TableOperation.Insert(songTable));
+            _songTable.Execute(TableOperation.InsertOrMerge(songTable));
         }
 
         public void SetRating(string name, string songName, int rating)

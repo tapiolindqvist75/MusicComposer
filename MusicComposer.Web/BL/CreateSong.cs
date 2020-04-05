@@ -53,6 +53,7 @@ namespace MusicComposer.Web.BL
                 var song = generator.CreateSongPart();
                 generator.WriteMusicXmlToStream(song, memoryStream);
                 memoryStream.Seek(0, SeekOrigin.Begin);
+                musicXmlBytes = new byte[memoryStream.Length];
                 memoryStream.Read(musicXmlBytes, 0, (int)memoryStream.Length);
             }
             return musicXmlBytes;

@@ -23,7 +23,7 @@ namespace MusicComposer.Web.BL
             else
             {
                 string servicePrincipal = configuration.GetValue<string>("MusicComposerStorage:ServicePrincipal");
-                string azureKeyVault = configuration.GetValue<string>("MusicComposerStorage:ServicePrincipal");
+                string azureKeyVault = configuration.GetValue<string>("MusicComposerStorage:AzureKeyVaultName");
                 string azureKeyVaultKeyName = configuration.GetValue<string>("MusicComposerStorage:AzureKeyVaultKeyName");
                 ManagedIdentityCredential credential = new ManagedIdentityCredential(servicePrincipal);
                 SecretClient client = new SecretClient(new Uri($"https://{azureKeyVault}.vault.azure.net/"), credential);
