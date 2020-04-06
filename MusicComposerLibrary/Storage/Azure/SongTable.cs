@@ -13,6 +13,8 @@ namespace MusicComposerLibrary.Storage.Azure
     {
         public SongTable() { }
         public string Data { get; set; }
-        public int Rating { get; set; }
+        public int? Rating { get; set; }
+        public bool? MusicXmlGenerated { get; set; }
+        public bool? MidiGenerated { get; set; }
     }
 }

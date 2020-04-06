@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Caching.Memory;
 using MusicComposerLibrary.Storage;
+using MusicComposerLibrary;
 
 namespace MusicComposer.Web.Pages
 {
@@ -52,10 +53,15 @@ namespace MusicComposer.Web.Pages
                 }
                 return Page();
             }
-            else if (Form == "download")
+            else if (Form == "downloadMusicXml")
             {
-                byte[] musicXmlBytes = BL.CreateSong.GetMusicXml(Name, SongTitle, _storageHandler, _memoryCache);
+                byte[] musicXmlBytes = BL.CreateSong.GetFileBytes(FileGeneratorBase.FileType.MusicXml, Name, SongTitle, _storageHandler, _memoryCache);
                 return File(musicXmlBytes, "application/vnd.recordare.musicxml+xml", $"{SongTitle}.musicxml");
+            }
+            else if (Form == "downloadMidi")
+            {
+                byte[] musicXmlBytes = BL.CreateSong.GetFileBytes(FileGeneratorBase.FileType.Midi, Name, SongTitle, _storageHandler, _memoryCache);
+                return File(musicXmlBytes, "audio/midi", $"{SongTitle}.mid");
             }
             else if (Form == "rating")
             {

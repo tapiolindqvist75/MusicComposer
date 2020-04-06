@@ -5,6 +5,7 @@ using System.IO;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 
 namespace MusicComposer.Web.BL
 {
@@ -41,7 +42,7 @@ namespace MusicComposer.Web.BL
             return songData;
         }
 
-        public static byte[] GetMusicXml(string name, string songName,
+        public static byte[] GetFileBytes(FileGeneratorBase.FileType fileType, string name, string songName,
             IStorageHandler storageHandler, IMemoryCache memoryCache)
         {
             MemoryStream memoryStream = new MemoryStream();
@@ -50,11 +51,12 @@ namespace MusicComposer.Web.BL
             if (!memoryCache.TryGetValue<byte[]>(GetCacheKey(name, songName), out musicXmlBytes))
             {
                 SongPartGenerator generator = new SongPartGenerator(songData);
-                var song = generator.CreateSongPart();
-                generator.WriteMusicXmlToStream(song, memoryStream);
+                List<Note> notes = generator.CreateSongPart();
+                generator.WriteToStream(fileType, notes,  memoryStream);
                 memoryStream.Seek(0, SeekOrigin.Begin);
                 musicXmlBytes = new byte[memoryStream.Length];
                 memoryStream.Read(musicXmlBytes, 0, (int)memoryStream.Length);
+                storageHandler.SetFileCreated(name, songName, fileType);
             }
             return musicXmlBytes;
         }
