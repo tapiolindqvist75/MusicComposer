@@ -26,7 +26,7 @@ namespace MusicComposer
             var notes = generator.CreateSongPart();
             using (StreamWriter writer = new StreamWriter($"{songTitle}.musicxml"))
             {
-                generator.WriteMusicXmlToStream(notes, writer.BaseStream);
+                generator.WriteToStream(FileGeneratorBase.FileType.MusicXml, notes, writer.BaseStream);
             }
         }
     }

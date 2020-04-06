@@ -1,23 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
+using MusicComposerLibrary.Storage;
 using MusicComposerLibrary.Structures;
+using MusicComposerLibrary.Extensions;
 
 namespace MusicComposerLibrary.MusicXml
 {
-    class Generator
+    public class MusicXmlGenerator : FileGeneratorBase
     {
-        List<scorepartwisePartMeasure> _measures;
-        public Generator() 
-        {
-            _measures = new List<scorepartwisePartMeasure>();
-        }
-        
-        public void AddMeasures(int fifths, List<Note> notes)
-        {
-            _measures.AddRange(GetMeasures(fifths, notes));
-        }
-        private scorepartwisePartMeasure[] GetMeasures(int fifths, List<Note> notes)
+        public MusicXmlGenerator(SongData songData) : base(songData) { }
+        private List<scorepartwisePartMeasure> GetMeasures(int fifths, List<Note> notes)
         {
             List<scorepartwisePartMeasure> measures = new List<scorepartwisePartMeasure>();
             int noteLoop = 0;
@@ -44,6 +37,18 @@ namespace MusicComposerLibrary.MusicXml
                                 sign = clefsign.G,
                                 line = "2"
                             }
+                        },
+                        time = new time[]
+                        {
+                            new time()
+                            {
+                                ItemsElementName = new ItemsChoiceType9[] { ItemsChoiceType9.beats, ItemsChoiceType9.beattype },
+                                Items = new object[] 
+                                { 
+                                    SongData.BeatsPerMeasure.ToString(), 
+                                    SongData.GetBeatType().ToString()
+                                }
+                            }
                         }
                     });
                     firstNote = false;
@@ -59,21 +64,22 @@ namespace MusicComposerLibrary.MusicXml
                 measures.Add(measure);
                 measureNumber++;
             }
-            return measures.ToArray();
+            return measures;
         }
-                        
-        public void CreateMusicXml(Stream target, string name, string songName)
+
+        public override void WriteToStream(List<Note> notes, Stream target)
         {
+            List<scorepartwisePartMeasure> measures = GetMeasures(SongData.GetKey(), notes);
             XmlSerializer xmlSerializer = new XmlSerializer(typeof(scorepartwise));
             scorepartwise root = new scorepartwise() { version = "3.1" };
-            root.work = new work() { worktitle = songName };
+            root.work = new work() { worktitle = SongData.SongName };
             root.identification = new identification()
             {
                 creator = new typedtext[]
                 {
                     new typedtext() { type = "composer", Value = "MusicComposer" },
                     new typedtext() { type = "programmer", Value = "Tapio Lindqvist" },
-                    new typedtext() { type = "clicker", Value = name }
+                    new typedtext() { type = "clicker", Value = SongData.Name }
                 }
             };
             root.partlist = new partlist()
@@ -104,12 +110,8 @@ namespace MusicComposerLibrary.MusicXml
                     id = "P1",
                 }
             };
-            root.part[0].measure = _measures.ToArray();
-
+            root.part[0].measure = measures.ToArray();
             xmlSerializer.Serialize(target, root);
-            
-                
         }
-
     }
 }

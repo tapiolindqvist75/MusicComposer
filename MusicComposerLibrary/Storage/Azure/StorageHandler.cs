@@ -56,5 +56,19 @@ namespace MusicComposerLibrary.Storage.Azure
             };
             _songTable.Execute(TableOperation.InsertOrMerge(songTable));
         }
+
+        public void SetFileCreated(string name, string songName, FileGeneratorBase.FileType fileType)
+        {
+            SongTable songTable = new SongTable()
+            {
+                PartitionKey = name,
+                RowKey = songName,
+            };
+            if (fileType == FileGeneratorBase.FileType.MusicXml)
+                songTable.MusicXmlGenerated = true;
+            else if (fileType == FileGeneratorBase.FileType.Midi)
+                songTable.MidiGenerated = true;
+            _songTable.Execute(TableOperation.InsertOrMerge(songTable));
+        }
     }
 }

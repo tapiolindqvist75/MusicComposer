@@ -160,7 +160,6 @@ namespace MusicComposerLibrary
             lastNote.Offset = 0;
             return notes;
         }
-
         public List<Structures.Note> CreateSongPart()
         {
             _weightedRandom.Reset();
@@ -175,13 +174,14 @@ namespace MusicComposerLibrary
             List<Structures.Note> notes = AddMelody(_weightedRandom, NoteDurations);
             return notes;
         }
-
-        public void WriteMusicXmlToStream(List<Structures.Note> notes, Stream target)
+        public void WriteToStream(FileGeneratorBase.FileType fileType, List<Structures.Note> notes, Stream target)
         {
-            MusicXml.Generator musicXmlCreator = new MusicXml.Generator();
-            int fifts = _scale.Notes.Sum(n => n.Note.Label.Offset);
-            musicXmlCreator.AddMeasures(fifts, notes);
-            musicXmlCreator.CreateMusicXml(target, SongData.Name, SongData.SongName);
+            FileGeneratorBase generator;
+            if (fileType == FileGeneratorBase.FileType.Midi)
+                generator = new Midi.MidiGenerator(SongData);
+            else
+                generator = new MusicXml.MusicXmlGenerator(SongData);
+            generator.WriteToStream(notes, target);
         }
     }
 }
