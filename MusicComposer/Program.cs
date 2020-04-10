@@ -20,8 +20,12 @@ namespace MusicComposer
                 PartLength = 4,
                 ScaleKey = "C",
                 SongName = songTitle,
-                Values = WeightedRandom.GetRandomValues()
+                Values = WeightedRandom.GetRandomValues(),
+                WeightData = WeightData.GetDefaults()
             };
+
+            string doh = SongData.Serialize(songData);
+
             SongPartGenerator generator = new SongPartGenerator(songData);
             var notes = generator.CreateSongPart();
             using (StreamWriter writer = new StreamWriter($"{songTitle}.musicxml"))

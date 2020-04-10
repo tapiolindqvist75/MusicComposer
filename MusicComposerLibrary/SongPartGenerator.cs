@@ -16,6 +16,7 @@ namespace MusicComposerLibrary
         private decimal _measureLength;
         private WeightedRandom _weightedRandom;
         private ScaleBase _scale;
+        private Weights _weights;
         public SongData SongData { get; private set; }
 
         public SongPartGenerator(SongData songData)
@@ -36,8 +37,11 @@ namespace MusicComposerLibrary
                 throw new ArgumentException($"{nameof(songData.BeatsPerMeasure)} must be positive value");
             if (songData.Values == null)
                 throw new ArgumentNullException(nameof(songData.Values));
+            if (songData.WeightData == null)
+                throw new ArgumentNullException(nameof(songData.WeightData));
             SongData = songData;
             _weightedRandom = new WeightedRandom(songData.Values);
+            _weights = new Weights(songData.WeightData);
             TotalLength = 0;
             NoteDurations = new List<Structures.NoteDuration>();
             _beatStops = new List<decimal>();
@@ -81,11 +85,11 @@ namespace MusicComposerLibrary
             int measureCount = Convert.ToInt32(Math.Floor(TotalLength / _measureLength));
             return (measureCount + 1) * _measureLength - TotalLength;
         }
-        public void AddNote(decimal duration, bool tie)
+        public void AddNote(decimal duration, bool tie, bool lastNoteOfMeasure)
         {
             //Total length exceeded, adjust to maximum length
             if (duration + TotalLength > SongData.PartLength)
-                AddNote(SongData.PartLength - TotalLength, false);
+                AddNote(SongData.PartLength - TotalLength, false, true);
             else
             {
                 decimal remainingBeforeStop = RemainingBeforeStop();
@@ -105,32 +109,51 @@ namespace MusicComposerLibrary
                     noteDuration.LastOfMeasure = true;
                 TotalLength += noteDuration.Duration;
                 if (tie)
+                {
                     noteDuration.Tie = Structures.NoteDuration.TieType.End;
+                    //If note is tied and it is tied to the last note of measure. Then it is the first note on next measure
+                    //But it needs to be treated as last according to weight
+                    //If note is tied and it is last note of measure, the weight must be according to the fact tied two notes combined are last note of measure
+                    //The tied note is not needed to be updated as last because melody is set in reverse order.
+                    if (lastNoteOfMeasure)
+                        noteDuration.LastOfMeasure = true;
+                }
                 if (remaining > 0)
                 {
                     if (tie)
                         noteDuration.Tie = Structures.NoteDuration.TieType.Both;
                     else
                         noteDuration.Tie = Structures.NoteDuration.TieType.Start;
-                    AddNote(remaining, true);
+                    AddNote(remaining, true, noteDuration.LastOfMeasure);
                 }
             }
         }
         private List<Structures.Note> AddMelody(WeightedRandom weightedRandom, List<Structures.NoteDuration> noteDurations)
         {
             List<Structures.Note> notes = new List<Structures.Note>();
-            int? latestNote = null;
+            int latestNote = 0;
             bool major = _scale is IonianScale ? true : false;
-            int[] lastNoteOfMeasureWeights = major ? Weights.Instance.GetMajorWeightsLastNote() : Weights.Instance.GetMinorWeightsLastNote();
-            int[] middleNoteOfMeasureWeights = major ? Weights.Instance.GetMajorWeightsMiddleNote() : Weights.Instance.GetMinorWeightsMiddleNote();
+            int[] lastNoteOfMeasureWeights = major ? _weights.GetMajorWeightsLastNote() : _weights.GetMinorWeightsLastNote();
+            int[] middleNoteOfMeasureWeights = major ? _weights.GetMajorWeightsMiddleNote() : _weights.GetMinorWeightsMiddleNote();
             
-            Dictionary<int, int> noteDistanceWeights = Weights.Instance.NoteDistanceWeights;
+            Dictionary<int, int> noteDistanceWeights = _weights.NoteDistanceWeights;
+            //Reverse the order, because last note is normally to scale key.
+            noteDurations.Reverse();
+            bool lastNote = true;
             foreach (Structures.NoteDuration noteDuration in noteDurations)
             {
-                //Splitted note continue with same scalenote
-                if (noteDuration.Tie == Structures.NoteDuration.TieType.Both || noteDuration.Tie == Structures.NoteDuration.TieType.End)
+                if (lastNote)
                 {
-                    notes.Add(NoteFactory.GetNoteByScaleNote(noteDuration, _scale.ChromaticNotes[latestNote.Value]));
+                    //Last note on key
+                    notes.Add(NoteFactory.GetNoteByScaleNote(noteDuration, _scale.ChromaticNotes[0]));
+                    lastNote = false;
+
+                    continue;
+                }
+                //Splitted note continue with same scalenote
+                if (noteDuration.Tie == Structures.NoteDuration.TieType.Both || noteDuration.Tie == Structures.NoteDuration.TieType.Start)
+                {
+                    notes.Add(NoteFactory.GetNoteByScaleNote(noteDuration, _scale.ChromaticNotes[latestNote]));
                     continue;
                 }
                 List<int> adjustedWeights;
@@ -141,23 +164,18 @@ namespace MusicComposerLibrary
                 }
                 else
                     adjustedWeights = middleNoteOfMeasureWeights.ToList();
-                if (latestNote != null)
+                for (int loop = 0; loop < adjustedWeights.Count; loop++)
                 {
-                    for (int loop = 0; loop < adjustedWeights.Count; loop++)
-                    {
-                        int distance = Math.Abs(latestNote.Value - loop);
-                        adjustedWeights[loop] = Convert.ToInt32(Math.Round((decimal)adjustedWeights[loop] * (decimal)noteDistanceWeights[distance], MidpointRounding.AwayFromZero));
-                    }
+                    int distance = Math.Abs(latestNote - loop);
+                    adjustedWeights[loop] = Convert.ToInt32(Math.Round((decimal)adjustedWeights[loop] * (decimal)noteDistanceWeights[distance], MidpointRounding.AwayFromZero));
                 }
                 int noteIndex = weightedRandom.GetRandomIndex(adjustedWeights);
                 latestNote = noteIndex;
                 ScaleNote scaleNote = _scale.ChromaticNotes[noteIndex];
                 notes.Add(NoteFactory.GetNoteByScaleNote(noteDuration, scaleNote));
             }
-            //Last note on key
-            Structures.Note lastNote = notes.Last();
-            lastNote.Name = _scale.Notes[0].Note.Name[0];
-            lastNote.Offset = 0;
+            notes.Reverse();
+            
             return notes;
         }
         public List<Structures.Note> CreateSongPart()
@@ -167,9 +185,9 @@ namespace MusicComposerLibrary
             NoteDurations = new List<Structures.NoteDuration>();
             while (TotalLength < SongData.PartLength)
             {
-                Structures.NoteDuration.NoteLengthType noteLengthType = _weightedRandom.GetRandomKey<Structures.NoteDuration.NoteLengthType>(Weights.Instance.LengthWeights);
+                Structures.NoteDuration.NoteLengthType noteLengthType = _weightedRandom.GetRandomKey<Structures.NoteDuration.NoteLengthType>(_weights.LengthWeights);
                 decimal duration = new Structures.NoteDuration(noteLengthType, false, Structures.NoteDuration.TieType.None, false).Duration;
-                AddNote(duration, false);
+                AddNote(duration, false, false);
             }
             List<Structures.Note> notes = AddMelody(_weightedRandom, NoteDurations);
             return notes;

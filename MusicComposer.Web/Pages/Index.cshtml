@@ -11,12 +11,159 @@
         @if (Model.SongTitle == null)
         {
             <p>Write your name on the box below and I will generate short song for you.</p>
-            <form method="post">
-                Name:
-                <input asp-for="Name" />
-                <input type="hidden" asp-for="Form" value="create" />
-                <input value="Create Jingle" type="submit" />
-            </form>
+            @if (Model.Mode == "Advanced")
+            {
+                <form method="post">
+                    Name:
+                    <input asp-for="Name" required="required" pattern=".{1,}"/>
+                    Key: 
+                    <select id="keys">
+                        <option value="cmajor" asp-for="Key">C-major</option>
+                        <option value="cminor" asp-for="Key">C-minor</option>
+                    </select>
+                    <table>
+                        <tr>
+                            <td width="200" colspan="2">Note duration weights.</td>
+                            <td width="200" colspan="2">Last note of each measure weights.</td>
+                            <td width="200" colspan="2">Other note weights</td>
+                            <td width="200" colspan="2">Note distance weights</td>
+                        </tr>
+                        <tr>
+                            <td>Half:</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.LengthHalfWeight" /></td>
+                            <td>Non-scale:</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.LastNonScale" /></td>
+                            <td>Non-scale:</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.MiddleNonScale" /></td>
+                            <td>Unison:</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.Distance_0" /></td>
+                        </tr>
+                        <tr>
+                            <td>Quarter:</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.LengthQuarterWeight" /></td>
+                            <td>Scale:</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.LastScale" /></td>
+                            <td>Scale:</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.MiddleScale" /></td>
+                            <td>Minor second:</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.Distance_1" /></td>
+                        </tr>
+                        <tr>
+                            <td>Eight:</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.LengthEightWeight" /></td>
+                            <td>Tonic(1):</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.LastTonic_1" /></td>
+                            <td>Tonic(1):</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.MiddleTonic_1" /></td>
+                            <td>Major second:</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.Distance_2" /></td>
+                        </tr>
+                        <tr>
+                            <td>Sixteenth:</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.LengthSixteenthWeight" /></td>
+                            <td>Mediant(3):</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.LastMediant_3" /></td>
+                            <td>Mediant(3):</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.MiddleMediant_3" /></td>
+                            <td>Minor third:</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.Distance_3" /></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td>Dominant(5):</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.LastDominant_5" /></td>
+                            <td>Dominant(5):</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.MiddleDominant_5" /></td>
+                            <td>Major third:</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.Distance_4" /></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td>Perfect fourth:</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.Distance_5" /></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td>Tritone:</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.Distance_6" /></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td>Perfect fifth and up:</td>
+                            <td><input type="number" min="0" max="999" asp-for="Weights.Distance_7AndUp" /></td>
+                        </tr>
+                    </table>
+                    <input type="hidden" asp-for="Form" value="createAdvanced" />
+                    <input value="Create Jingle" type="submit" />
+                </form>
+                <br />
+                <form method="post">
+                    <input type="hidden" asp-for="Name" />
+                    <input type="hidden" asp-for="Mode" value="Basic" />
+                    <input type="hidden" asp-for="Form" value="basicMode" />
+                    <input value="Basic Mode" type="submit" />
+                </form>
+                <br/>
+                <h3>Bit of "advanced" explanation</h3>
+                <p>
+                    Each note weight is calculated by multiplying note distance weight and note weight. f.ex in major key jingle,
+                    if the second latest note in first measure is E, the last note weights are</p>
+                    <ul>
+                        <li>C = Tonic * Major third (default 200 * 2 = 400)</li>
+                        <li>C# = Non scale * Minor third (default 1 * 4 = 4)</li>
+                        <li>D = Scale * Major second (default 50 * 8 = 400)</li>
+                        <li>D# = Non scale * Minor second (default 1 * 10 = 10)</li>
+                        <li>E = Mediant * Unison (default 100 * 5 = 500)</li>
+                        <li>F = Scale * Minor second (default 50 * 10) = 500</li>
+                        <li>F# = Non scale * Major second (default 1 * 8) = 8</li>
+                        <li>G = Dominant * Minor third (default 150 * 4) = 600</li>
+                        <li>G# = Non scale * Major third (default 1 * 2) = 2</li>
+                        <li>A = Scale * Perfect fourth (default 50 * 1) = 50</li>
+                        <li>A# = Non scale * Tritone (default 1 * 1) = 1</li>
+                        <li>B = Scale * Perfect fifth (default 50 * 1) = 50</li>
+                    </ul>
+                <p>So the most propable note would be G, but close competitors are E and F followed by C and D.</p>
+            }
+            else
+            {
+                <form method="post">
+                    Name:
+                    <input asp-for="Name" required="required" pattern=".{1,}"/>
+                    Key: 
+                    <select id="keys" asp-for="Key">
+                        <option value="cmajor">C-major</option>
+                        <option value="cminor">C-minor</option>
+                    </select>
+                    <input type="hidden" asp-for="Mode" />
+                    <input type="hidden" asp-for="Form" value="create" />
+                    <br/><br/>
+                    <input value="Create Jingle" type="submit" />
+                </form>
+                <br />
+                <form method="post">
+                    <input type="hidden" asp-for="Name" />
+                    <input type="hidden" asp-for="Mode" value="Advanced" />
+                    <input value="Advanced Mode" type="submit" />
+                </form>
+            }
+
+
         }
         @if (Model.SongTitle != null)
         {

@@ -19,7 +19,8 @@ namespace MusicComposer.UnitTest
                 SongName = "Test",
                 Name = "Test",
                 ScaleKey = "C",
-                Values = WeightedRandom.GetRandomValues()
+                Values = WeightedRandom.GetRandomValues(),
+                WeightData = WeightData.GetDefaults()
             };
         }
         private SongPartGenerator _songPartGenerator;
@@ -90,7 +91,7 @@ namespace MusicComposer.UnitTest
         public void AddNote_HalfNoteAt0125_TiedEigthQuarterEight()
         {
             _songPartGenerator.TotalLength = 0.125M;
-            _songPartGenerator.AddNote(0.5M, false);
+            _songPartGenerator.AddNote(0.5M, false, false);
             Assert.AreEqual(3, _songPartGenerator.NoteDurations.Count);
             Assert.AreEqual(0.125M, _songPartGenerator.NoteDurations[0].Duration);
             Assert.AreEqual(NoteDuration.TieType.Start, _songPartGenerator.NoteDurations[0].Tie);
@@ -106,7 +107,7 @@ namespace MusicComposer.UnitTest
             ///stop 1 0.0625 + (0.1875) = 0.25 remain 0.5 - 0.1875 = 0.3125. stop 2 0.25 Remain 0.3125 - 0.25 = 0,625
             ///stop 3 0.0625
             _songPartGenerator.TotalLength = 0.0625M;
-            _songPartGenerator.AddNote(0.5M, false);
+            _songPartGenerator.AddNote(0.5M, false, false);
             Assert.AreEqual(3, _songPartGenerator.NoteDurations.Count);
             Assert.AreEqual(0.1875M, _songPartGenerator.NoteDurations[0].Duration);
             Assert.AreEqual(NoteDuration.TieType.Start, _songPartGenerator.NoteDurations[0].Tie);

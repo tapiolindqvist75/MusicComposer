@@ -71,16 +71,16 @@ namespace MusicComposer.UnitTests
             Assert.AreEqual(13, duration);
         }
         [TestMethod]
-        public void NoteToMidi_Fis_66()
+        public void NoteToMidi_C_60()
         {
-            byte note = MidiConverter.NoteToMidi('F', 1);
-            Assert.AreEqual(66, note);
+            byte note = MidiConverter.NoteToMidi('C', 0);
+            Assert.AreEqual(60, note);
         }
         [TestMethod]
-        public void NoteToMidi_Gisis_69()
+        public void NoteToMidi_Cis_61()
         {
-            byte note = MidiConverter.NoteToMidi('G', 2);
-            Assert.AreEqual(69, note);
+            byte note = MidiConverter.NoteToMidi('C', 1);
+            Assert.AreEqual(61, note);
         }
         [TestMethod]
         public void NoteToMidi_Des_61()
@@ -89,10 +89,94 @@ namespace MusicComposer.UnitTests
             Assert.AreEqual(61, note);
         }
         [TestMethod]
-        public void NoteToMidi_H71()
+        public void NoteToMidi_D_62()
         {
-            byte note = MidiConverter.NoteToMidi('H', 0);
+            byte note = MidiConverter.NoteToMidi('D', 0);
+            Assert.AreEqual(62, note);
+        }
+        [TestMethod]
+        public void NoteToMidi_Dis_63()
+        {
+            byte note = MidiConverter.NoteToMidi('D', 1);
+            Assert.AreEqual(63, note);
+        }
+        [TestMethod]
+        public void NoteToMidi_Es_63()
+        {
+            byte note = MidiConverter.NoteToMidi('E', -1);
+            Assert.AreEqual(63, note);
+        }
+        [TestMethod]
+        public void NoteToMidi_E_64()
+        {
+            byte note = MidiConverter.NoteToMidi('E', 0);
+            Assert.AreEqual(64, note);
+        }
+        [TestMethod]
+        public void NoteToMidi_F_65()
+        {
+            byte note = MidiConverter.NoteToMidi('F', 0);
+            Assert.AreEqual(65, note);
+        }
+        [TestMethod]
+        public void NoteToMidi_Fis_66()
+        {
+            byte note = MidiConverter.NoteToMidi('F', 1);
+            Assert.AreEqual(66, note);
+        }
+        [TestMethod]
+        public void NoteToMidi_Ges_66()
+        {
+            byte note = MidiConverter.NoteToMidi('G', -1);
+            Assert.AreEqual(66, note);
+        }
+        [TestMethod]
+        public void NoteToMidi_G_67()
+        {
+            byte note = MidiConverter.NoteToMidi('G', 0);
+            Assert.AreEqual(67, note);
+        }
+        [TestMethod]
+        public void NoteToMidi_Gis_68()
+        {
+            byte note = MidiConverter.NoteToMidi('G', 1);
+            Assert.AreEqual(68, note);
+        }
+        [TestMethod]
+        public void NoteToMidi_As_68()
+        {
+            byte note = MidiConverter.NoteToMidi('A', -1);
+            Assert.AreEqual(68, note);
+        }
+        [TestMethod]
+        public void NoteToMidi_A_69()
+        {
+            byte note = MidiConverter.NoteToMidi('A', 0);
+            Assert.AreEqual(69, note);
+        }
+        [TestMethod]
+        public void NoteToMidi_Ais_70()
+        {
+            byte note = MidiConverter.NoteToMidi('A', 1);
+            Assert.AreEqual(70, note);
+        }
+        [TestMethod]
+        public void NoteToMidi_Bb_70()
+        {
+            byte note = MidiConverter.NoteToMidi('B', -1);
+            Assert.AreEqual(70, note);
+        }
+        [TestMethod]
+        public void NoteToMidi_B_71()
+        {
+            byte note = MidiConverter.NoteToMidi('B', 0);
             Assert.AreEqual(71, note);
+        }
+        [TestMethod]
+        public void NoteToMidi_Gisis_69()
+        {
+            byte note = MidiConverter.NoteToMidi('G', 2);
+            Assert.AreEqual(69, note);
         }
 
         [TestMethod]

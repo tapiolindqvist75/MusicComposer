@@ -16,22 +16,10 @@ namespace MusicComposer.Web.BL
             return $"Song{name}{songName}";
         }
 
-        public static void CreateAndStoreSong(string name, string songName,
-            IStorageHandler storageHandler, IMemoryCache memoryCache)
+        public static void CreateAndStoreSong(SongData songData, IStorageHandler storageHandler, IMemoryCache memoryCache)
         {
-            SongData songData = new SongData()
-            {
-                BeatsPerMeasure = 4,
-                BeatUnit = NoteDuration.NoteLengthType.Quarter,
-                Major = true,
-                Name = name,
-                SongName = songName,
-                PartLength = 4,
-                ScaleKey = "C",
-                Values = WeightedRandom.GetRandomValues()
-            };
             storageHandler.SaveSongData(songData);
-            memoryCache.Set<SongData>(GetCacheKey(name, songName), songData);
+            memoryCache.Set<SongData>(GetCacheKey(songData.Name, songData.SongName), songData);
         }
 
         private static SongData GetSongData(string name, string songName, IStorageHandler storageHandler, IMemoryCache memoryCache)

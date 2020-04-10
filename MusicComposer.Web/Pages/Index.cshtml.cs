@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Caching.Memory;
 using MusicComposerLibrary.Storage;
 using MusicComposerLibrary;
+using MusicComposerLibrary.Structures;
 
 namespace MusicComposer.Web.Pages
 {
@@ -26,6 +27,8 @@ namespace MusicComposer.Web.Pages
             _memoryCache = memoryCache;
             _storageHandler = BL.StorageHandler.GetStorageHandler(logger, configuration, memoryCache);
         }
+        [BindProperty]
+        public string Mode { get; set; }
 
         [BindProperty]
         public string SongTitle { get; set; }
@@ -37,10 +40,15 @@ namespace MusicComposer.Web.Pages
         public string Rating { get; set; }
         [BindProperty]
         public bool Rated { get; set; }
+        [BindProperty]
+        public WeightData Weights { get; set; }
+        [BindProperty]
+        public string Key { get; set; }
 
         public void OnGet()
         {
         }
+
         public IActionResult OnPost()
         {
             if (Form == "create")
@@ -49,7 +57,41 @@ namespace MusicComposer.Web.Pages
                 {
                     Name = BL.StorageHandler.ConvertToValidPartitionKey(Name);
                     SongTitle = "MC" + DateTime.Now.ToString("yyyyMMddHHmmss");
-                    BL.CreateSong.CreateAndStoreSong(Name, SongTitle, _storageHandler, _memoryCache);
+                    SongData songData = new SongData()
+                    {
+                        BeatsPerMeasure = 4,
+                        BeatUnit = NoteDuration.NoteLengthType.Quarter,
+                        Major = Key == "cmajor" ? true : false,
+                        Name = Name,
+                        SongName = SongTitle,
+                        PartLength = 4,
+                        ScaleKey = "C",
+                        Values = WeightedRandom.GetRandomValues(),
+                        WeightData = WeightData.GetDefaults()
+                    };
+                    BL.CreateSong.CreateAndStoreSong(songData, _storageHandler, _memoryCache);
+                }
+                return Page();
+            }
+            else if (Form == "createAdvanced")
+            {
+                if (!string.IsNullOrWhiteSpace(Name))
+                {
+                    Name = BL.StorageHandler.ConvertToValidPartitionKey(Name);
+                    SongTitle = "MC" + DateTime.Now.ToString("yyyyMMddHHmmss");
+                    SongData songData = new SongData()
+                    {
+                        BeatsPerMeasure = 4,
+                        BeatUnit = NoteDuration.NoteLengthType.Quarter,
+                        Major = Key == "cmajor" ? true : false,
+                        Name = Name,
+                        SongName = SongTitle,
+                        PartLength = 4,
+                        ScaleKey = "C",
+                        Values = WeightedRandom.GetRandomValues(),
+                        WeightData = Weights
+                    };
+                    BL.CreateSong.CreateAndStoreSong(songData, _storageHandler, _memoryCache);
                 }
                 return Page();
             }
@@ -71,7 +113,8 @@ namespace MusicComposer.Web.Pages
             }
             else
             {
-                return Redirect("./index");
+                Weights = WeightData.GetDefaults();
+                return Page();
             }
         }
     }

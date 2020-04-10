@@ -18,9 +18,9 @@ namespace MusicComposerLibrary.Midi
                 case 'F': return Convert.ToByte(65 + offset);
                 case 'G': return Convert.ToByte(67 + offset);
                 case 'A': return Convert.ToByte(69 + offset);
-                case 'H': return Convert.ToByte(71 + offset);
+                case 'B': return Convert.ToByte(71 + offset);
+                default: throw new ArgumentException("Invalid note, valid values 'C','D','E','F','G','A','B'");
             }
-            return 0;
         }
 
         public static int DecimalToDuration(decimal duration)

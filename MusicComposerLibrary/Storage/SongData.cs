@@ -11,6 +11,7 @@ namespace MusicComposerLibrary.Storage
         public string ScaleKey { get; set; }
         public bool Major { get; set; }
         public double[] Values { get; set; }
+        public WeightData WeightData { get; set; }
         public int PartLength { get; set; }
         public int BeatsPerMeasure { get; set; }
         public NoteDuration.NoteLengthType BeatUnit { get; set; }
