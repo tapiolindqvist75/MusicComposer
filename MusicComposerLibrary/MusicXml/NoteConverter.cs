@@ -7,7 +7,7 @@ namespace MusicComposerLibrary.MusicXml
 {
     public class NoteConverter
     {
-        Note _note;
+        private readonly Note _note;
         public NoteConverter(Note note)
         {
             _note = note;
@@ -15,52 +15,67 @@ namespace MusicComposerLibrary.MusicXml
         }
         private step GetStep()
         {
-            switch(_note.Name)
+            return _note.Pitch.Name switch
             {
-                case 'C': return step.C;
-                case 'D': return step.D;
-                case 'E': return step.E;
-                case 'F': return step.F;
-                case 'G': return step.G;
-                case 'A': return step.A;
-                case 'B': return step.B;
-                default: throw new ArgumentException("Invalid Note " + _note.Name.ToString());
-            }
+                'C' => step.C,
+                'D' => step.D,
+                'E' => step.E,
+                'F' => step.F,
+                'G' => step.G,
+                'A' => step.A,
+                'B' => step.B,
+                _ => throw new ArgumentException("Invalid Note " + _note.Pitch.Name.ToString()),
+            };
         }
         private static notetypevalue GetNotetypevalue(Note note)
         {
-            switch (note.NoteLength)
+            return note.NoteLength switch
             {
-                case NoteDuration.NoteLengthType.Half:
-                    return notetypevalue.half;
-                case NoteDuration.NoteLengthType.Quarter:
-                    return notetypevalue.quarter;
-                case NoteDuration.NoteLengthType.Eigth:
-                    return notetypevalue.eighth;
-                case NoteDuration.NoteLengthType.Sixteenth:
-                    return notetypevalue.Item16th;
-                default:
-                    throw new ArgumentException("Note.NoteLength");
-            }
+                NoteDuration.NoteLengthType.Half => notetypevalue.half,
+                NoteDuration.NoteLengthType.Quarter => notetypevalue.quarter,
+                NoteDuration.NoteLengthType.Eigth => notetypevalue.eighth,
+                NoteDuration.NoteLengthType.Sixteenth => notetypevalue.Item16th,
+                _ => throw new ArgumentException("Note.NoteLength"),
+            };
         }
-        public note GetMusicXmlNote()
+
+        private beamvalue GetBeamvalue()
+        {
+            return _note.Beam switch
+            {
+                NoteDuration.LinkType.Start => beamvalue.begin,
+                NoteDuration.LinkType.End => beamvalue.end,
+                NoteDuration.LinkType.Continue => beamvalue.@continue,
+                _ => throw new Exception("Invalid usage"),
+            };
+        }
+        public note GetMusicXmlNote(bool chord, int staff, int voice)
         {
             note note = new note();
+            if (_note.Beam != NoteDuration.LinkType.None)
+                note.beam = new beam[] { new beam() { number = "1", Value = GetBeamvalue() } };
             List<ItemsChoiceType1> itemChoices = new List<ItemsChoiceType1>();
             List<object> items = new List<object>();
+            if (chord)
+            {
+                itemChoices.Add(ItemsChoiceType1.chord);
+                items.Add(new empty());
+            }
             itemChoices.Add(ItemsChoiceType1.pitch);
-            pitch pitch = new pitch() { step = GetStep(), octave = "4" };
+            pitch pitch = new pitch() { step = GetStep(), octave = _note.Pitch.Octave.ToString() };
             items.Add(pitch);
             itemChoices.Add(ItemsChoiceType1.duration);
-            items.Add((decimal)_note.Duration);
-            if (_note.Tie != NoteDuration.TieType.None)
+            items.Add((decimal)GetDuration());
+            note.staff = staff.ToString();
+            note.voice = voice.ToString();
+            if (_note.Tie != NoteDuration.LinkType.None)
             {
                 ///In MuseScore note tie's are specified both in notatation/tied and tie elements.
                 List<object> notations = new List<object>();
                 itemChoices.Add(ItemsChoiceType1.tie);
                 tie tie = new tie();
                 tied tied = new tied();
-                if (_note.Tie == NoteDuration.TieType.End)
+                if (_note.Tie == NoteDuration.LinkType.End)
                 {
                     tie.type = startstop.stop;
                     tied.type = startstopcontinue.stop;
@@ -72,7 +87,7 @@ namespace MusicComposerLibrary.MusicXml
                 }
                 items.Add(tie);
                 notations.Add(tied);
-                if (_note.Tie == NoteDuration.TieType.Both)
+                if (_note.Tie == NoteDuration.LinkType.Continue)
                 {
                     itemChoices.Add(ItemsChoiceType1.tie);
                     items.Add(new tie() { type = startstop.stop });
@@ -84,10 +99,10 @@ namespace MusicComposerLibrary.MusicXml
             note.Items = items.ToArray();
             if (_note.Dot)
                 note.dot = new emptyplacement[] { };
-            if (_note.Offset != 0)
+            if (_note.Pitch.Offset != 0)
             {
                 pitch.alterSpecified = true;
-                pitch.alter = _note.Offset;
+                pitch.alter = _note.Pitch.Offset;
             }
             note.type = new notetype() { Value = NoteConverter.GetNotetypevalue(_note) };
             return note;
@@ -95,7 +110,7 @@ namespace MusicComposerLibrary.MusicXml
 
         public decimal GetDuration()
         { 
-            return _note.Duration;
+            return _note.Duration * 4;
         }
     }
 }

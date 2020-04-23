@@ -9,11 +9,11 @@ namespace MusicComposerLibrary
     public abstract class FileGeneratorBase
     {
         public enum FileType { MusicXml, Midi };
-        protected SongData SongData { get; private set; }
-        public FileGeneratorBase(SongData songData)
+        protected SongInput Input { get; private set; }
+        public FileGeneratorBase(SongInput input)
         {
-            SongData = songData;
+            Input = input;
         }
-        public abstract void WriteToStream(List<Structures.Note> notes, Stream target);
+        public abstract void WriteToStream(Structures.SongOutput songOutput, Stream target);
     }
 }

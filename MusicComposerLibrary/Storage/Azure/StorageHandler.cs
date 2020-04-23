@@ -23,7 +23,7 @@ namespace MusicComposerLibrary.Storage.Azure
         {
             return new StorageHandler(parameters);
         }
-        public SongData RetrieveSongData(string name, string songName)
+        public SongInput RetrieveSongData(string name, string songName)
         {
             SongTable songTable = _songTable.ExecuteQuery<SongTable>(new TableQuery<SongTable>()
             {
@@ -32,16 +32,16 @@ namespace MusicComposerLibrary.Storage.Azure
                     TableOperators.And,
                     TableQuery.GenerateFilterCondition(nameof(TableEntity.RowKey), QueryComparisons.Equal, songName))
             }).FirstOrDefault();
-            return SongData.Deserialize(songTable.Data);
+            return SongInput.Deserialize(songTable.Data);
         }
 
-        public void SaveSongData(SongData song)
+        public void SaveSongData(SongInput song)
         {
             SongTable songTable = new SongTable()
             {
                 PartitionKey = song.Name,
                 RowKey = song.SongName,
-                Data = SongData.Serialize(song)
+                Data = SongInput.Serialize(song)
             };
             _songTable.Execute(TableOperation.InsertOrMerge(songTable));
         }

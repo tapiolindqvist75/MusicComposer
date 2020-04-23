@@ -30,7 +30,7 @@ namespace MusicComposerLibrary.Storage
         public int Distance_4 { get; set; }
         public int Distance_5 { get; set; }
         public int Distance_6 { get; set; }
-        public int Distance_7AndUp { get; set; }
+        public int Distance_7 { get; set; }
 
         public static WeightData GetDefaults()
         {
@@ -57,7 +57,7 @@ namespace MusicComposerLibrary.Storage
                 Distance_4 = 2,
                 Distance_5 = 1,
                 Distance_6 = 1,
-                Distance_7AndUp = 1
+                Distance_7 = 1
             };
             return weightData;
         }

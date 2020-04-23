@@ -1,66 +1,88 @@
 ﻿using Melanchall.DryWetMidi.Core;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace MusicComposerLibrary.Midi
 {
     public class MidiConverter
     {
         public const int TEMPO_PER_QUARTER = 480;
-        public static byte NoteToMidi(char note, int offset)
-        {
-            switch (note)
-            {
-                case 'C': return Convert.ToByte(60 + offset);
-                case 'D': return Convert.ToByte(62 + offset);
-                case 'E': return Convert.ToByte(64 + offset);
-                case 'F': return Convert.ToByte(65 + offset);
-                case 'G': return Convert.ToByte(67 + offset);
-                case 'A': return Convert.ToByte(69 + offset);
-                case 'B': return Convert.ToByte(71 + offset);
-                default: throw new ArgumentException("Invalid note, valid values 'C','D','E','F','G','A','B'");
-            }
-        }
-
         public static int DecimalToDuration(decimal duration)
         {
+            if (duration == 0)
+                return 0;
             decimal tempoPerDuration = TEMPO_PER_QUARTER * 4;
             decimal ticks = duration * tempoPerDuration;
             return Convert.ToInt32(ticks - (ticks / 20) - 1);
         }
-
         public static int DecimalToPause(decimal duration)
         {
+            if (duration == 0)
+                return 0;
             decimal tempoPerDuration = TEMPO_PER_QUARTER * 4;
             decimal ticks = duration * tempoPerDuration;
             return Convert.ToInt32((ticks / 20) + 1);
         }
-
-        public static void AddNotesToChunks(EventsCollection target, List<Structures.Note> notes)
+        public static void AddChordEvents(EventsCollection chordEvents, List<Structures.Chord> chords)
+        {
+            decimal lastChordDuration = 0;
+            decimal duration = 0.25M;
+            foreach (Structures.Chord chord in chords)
+            {
+                for (int chordBeatLoop = 0; chordBeatLoop < 4; chordBeatLoop++)
+                {
+                    bool firstNoteInChord = true;
+                    foreach (Structures.NotePitch notePitch in chord.NotePitches)
+                    {
+                        byte chordNote = (byte)notePitch.MidiNumber;
+                        chordEvents.Add(new NoteOnEvent()
+                        {
+                            NoteNumber = new Melanchall.DryWetMidi.Common.SevenBitNumber(chordNote),
+                            Velocity = new Melanchall.DryWetMidi.Common.SevenBitNumber(40),
+                            DeltaTime = DecimalToPause(firstNoteInChord ? lastChordDuration : 0)
+                        });
+                        firstNoteInChord = false;
+                    }
+                    firstNoteInChord = true;
+                    foreach (Structures.NotePitch notePitch in chord.NotePitches)
+                    {
+                        byte chordNote = (byte)notePitch.MidiNumber;
+                        chordEvents.Add(new NoteOffEvent()
+                        {
+                            NoteNumber = new Melanchall.DryWetMidi.Common.SevenBitNumber(chordNote),
+                            Velocity = new Melanchall.DryWetMidi.Common.SevenBitNumber(0),
+                            DeltaTime = DecimalToDuration(firstNoteInChord ? duration : 0)
+                        });
+                        firstNoteInChord = false;
+                    }
+                    lastChordDuration = duration;
+                }
+            }
+        }
+        public static void AddMelodyEvents(EventsCollection melodyEvents, List<Structures.Note> melodyNotes)
         {
             decimal lastDuration = 0;
-            for(int loop=0;loop<notes.Count;loop++)
+            for(int loop=0;loop<melodyNotes.Count;loop++)
             {
-                Structures.Note current = notes[loop];
+                Structures.Note current = melodyNotes[loop];
                 decimal duration = current.Duration;
-                byte note = NoteToMidi(current.Name, current.Offset);
-                if (current.Tie == Structures.NoteDuration.TieType.Start)
+                byte note = (byte)current.Pitch.MidiNumber;
+                if (current.Tie == Structures.NoteDuration.LinkType.Start)
                 {
-                    while(current.Tie != Structures.NoteDuration.TieType.End)
+                    while(current.Tie != Structures.NoteDuration.LinkType.End)
                     {
                         loop++;
-                        current = notes[loop];
+                        current = melodyNotes[loop];
                         duration += current.Duration;
                     }
                 }
-                target.Add(new NoteOnEvent()
+                melodyEvents.Add(new NoteOnEvent()
                 {
                     NoteNumber = new Melanchall.DryWetMidi.Common.SevenBitNumber(note),
                     Velocity = new Melanchall.DryWetMidi.Common.SevenBitNumber(80),
                     DeltaTime = DecimalToPause(lastDuration)
                 });
-                target.Add(new NoteOffEvent()
+                melodyEvents.Add(new NoteOffEvent()
                 {
                     NoteNumber = new Melanchall.DryWetMidi.Common.SevenBitNumber(note),
                     Velocity = new Melanchall.DryWetMidi.Common.SevenBitNumber(0),

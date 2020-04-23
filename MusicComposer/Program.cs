@@ -11,20 +11,20 @@ namespace MusicComposer
         static void Main(string[] args)
         {
             string songTitle = "MC " + DateTime.Now.ToString("yyyyMMddHHmmss");
-            SongData songData = new SongData()
+            SongInput songData = new SongInput()
             {
                 BeatsPerMeasure = 4,
                 BeatUnit = NoteDuration.NoteLengthType.Quarter,
                 Major = new Random().Next(0, 2) == 0 ? true : false,
                 Name = "Tapio Lindqvist",
                 PartLength = 4,
-                ScaleKey = "C",
+                ScaleKeyFullName = "C",
                 SongName = songTitle,
                 Values = WeightedRandom.GetRandomValues(),
                 WeightData = WeightData.GetDefaults()
             };
 
-            string doh = SongData.Serialize(songData);
+            string doh = SongInput.Serialize(songData);
 
             SongPartGenerator generator = new SongPartGenerator(songData);
             var notes = generator.CreateSongPart();

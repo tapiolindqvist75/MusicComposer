@@ -1,37 +1,19 @@
-﻿using System;
-using MusicComposerLibrary.Storage;
-using Music.Core;
-using Music.Core.Scales.Diatonic;
-using System.Linq;
+﻿using MusicComposerLibrary.Storage;
 
 namespace MusicComposerLibrary.Extensions
 {
     public static class SongDataExtension
     {
-        public static int GetKey(this SongData songData)
+        public static int GetBeatType(this SongInput songData)
         {
-            ScaleBase scale;
-            if (songData.Major)
-                scale = new IonianScale(MusicNotes.FromString(songData.ScaleKey));
-            else
-                scale = new AeolianScale(MusicNotes.FromString(songData.ScaleKey));
-            int key = scale.Notes.Sum(n => n.Note.Label.Offset);
-            return key;
-        }
-
-        public static int GetBeatType(this SongData songData)
-        {
-            switch(songData.BeatUnit)
+            return songData.BeatUnit switch
             {
-                case Structures.NoteDuration.NoteLengthType.Half:
-                    return 2;
-                case Structures.NoteDuration.NoteLengthType.Quarter:
-                    return 4;
-                case Structures.NoteDuration.NoteLengthType.Eigth:
-                    return 8;
-                default:
-                    return 16;
+                Structures.NoteDuration.NoteLengthType.Half => 2,
+                Structures.NoteDuration.NoteLengthType.Quarter => 4,
+                Structures.NoteDuration.NoteLengthType.Eigth => 8,
+                _ => 16,
             };
+            ;
         }
     }
 }

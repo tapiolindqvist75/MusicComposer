@@ -4,29 +4,30 @@ using MusicComposerLibrary.Storage;
 using MusicComposerLibrary.Structures;
 using System.Collections.Generic;
 
-namespace MusicComposer.UnitTest
+namespace MusicComposer.UnitTests
 {
     [TestClass]
     public class SongPartGeneratorTest
     {
-        private SongData GetSongData(int beatsPerMeasure)
+        private SongInput GetSongInput(int beatsPerMeasure)
         {
-            return new SongData()
+            return new SongInput()
             {
                 PartLength = 4,
                 BeatsPerMeasure = beatsPerMeasure,
                 BeatUnit = NoteDuration.NoteLengthType.Quarter,
                 SongName = "Test",
                 Name = "Test",
-                ScaleKey = "C",
+                ScaleKeyFullName = "C",
                 Values = WeightedRandom.GetRandomValues(),
-                WeightData = WeightData.GetDefaults()
+                WeightData = WeightData.GetDefaults(),
+                Chords = true
             };
         }
-        private SongPartGenerator _songPartGenerator;
+        private readonly SongPartGenerator _songPartGenerator;
         public SongPartGeneratorTest()
         {
-            SongData songData = GetSongData(4);
+            SongInput songData = GetSongInput(4);
             _songPartGenerator = new SongPartGenerator(songData);
         }
         [TestMethod]
@@ -52,9 +53,11 @@ namespace MusicComposer.UnitTest
         [TestMethod]
         public void RemainingBeforeStop_3of4from0875_0125()
         {
-            SongData songData = GetSongData(3);
-            SongPartGenerator songPartGenerator = new SongPartGenerator(songData);
-            songPartGenerator.TotalLength = 0.875M;
+            SongInput songData = GetSongInput(3);
+            SongPartGenerator songPartGenerator = new SongPartGenerator(songData)
+            {
+                TotalLength = 0.875M
+            };
             decimal result = songPartGenerator.RemainingBeforeStop();
             Assert.AreEqual(0.125M, result);
         }
@@ -81,8 +84,10 @@ namespace MusicComposer.UnitTest
         [TestMethod]
         public void RemainingBeforeNextMeasure_3of4from325_05()
         {
-            SongPartGenerator songPartGenerator = new SongPartGenerator(GetSongData(3));
-            songPartGenerator.TotalLength = 2.5M;
+            SongPartGenerator songPartGenerator = new SongPartGenerator(GetSongInput(3))
+            {
+                TotalLength = 2.5M
+            };
             decimal result = songPartGenerator.RemainingBeforeNextMeasure();
             Assert.AreEqual(0.5M, result);
         }
@@ -90,68 +95,164 @@ namespace MusicComposer.UnitTest
         [TestMethod]
         public void AddNote_HalfNoteAt0125_TiedEigthQuarterEight()
         {
+            List<NoteDuration> noteDurations = new List<NoteDuration>();
             _songPartGenerator.TotalLength = 0.125M;
-            _songPartGenerator.AddNote(0.5M, false, false);
-            Assert.AreEqual(3, _songPartGenerator.NoteDurations.Count);
-            Assert.AreEqual(0.125M, _songPartGenerator.NoteDurations[0].Duration);
-            Assert.AreEqual(NoteDuration.TieType.Start, _songPartGenerator.NoteDurations[0].Tie);
-            Assert.AreEqual(0.25M, _songPartGenerator.NoteDurations[1].Duration);
-            Assert.AreEqual(NoteDuration.TieType.Both, _songPartGenerator.NoteDurations[1].Tie);
-            Assert.AreEqual(0.125M, _songPartGenerator.NoteDurations[2].Duration);
-            Assert.AreEqual(NoteDuration.TieType.End, _songPartGenerator.NoteDurations[2].Tie);
+            _songPartGenerator.AddNote(0.5M, false, false, noteDurations);
+            Assert.AreEqual(3, noteDurations.Count);
+            Assert.AreEqual(0.125M, noteDurations[0].Duration);
+            Assert.AreEqual(NoteDuration.LinkType.Start, noteDurations[0].Tie);
+            Assert.AreEqual(0.25M, noteDurations[1].Duration);
+            Assert.AreEqual(NoteDuration.LinkType.Continue, noteDurations[1].Tie);
+            Assert.AreEqual(0.125M, noteDurations[2].Duration);
+            Assert.AreEqual(NoteDuration.LinkType.End, noteDurations[2].Tie);
         }
 
         [TestMethod]
         public void AddNote_HalfNoteAt00625M_TiedEightDotQuarter16th()
         {
+            List<NoteDuration> noteDurations = new List<NoteDuration>();
             ///stop 1 0.0625 + (0.1875) = 0.25 remain 0.5 - 0.1875 = 0.3125. stop 2 0.25 Remain 0.3125 - 0.25 = 0,625
             ///stop 3 0.0625
             _songPartGenerator.TotalLength = 0.0625M;
-            _songPartGenerator.AddNote(0.5M, false, false);
-            Assert.AreEqual(3, _songPartGenerator.NoteDurations.Count);
-            Assert.AreEqual(0.1875M, _songPartGenerator.NoteDurations[0].Duration);
-            Assert.AreEqual(NoteDuration.TieType.Start, _songPartGenerator.NoteDurations[0].Tie);
-            Assert.AreEqual(0.25M, _songPartGenerator.NoteDurations[1].Duration);
-            Assert.AreEqual(NoteDuration.TieType.Both, _songPartGenerator.NoteDurations[1].Tie);
-            Assert.AreEqual(0.0625M, _songPartGenerator.NoteDurations[2].Duration);
-            Assert.AreEqual(NoteDuration.TieType.End, _songPartGenerator.NoteDurations[2].Tie);
+            _songPartGenerator.AddNote(0.5M, false, false, noteDurations);
+            Assert.AreEqual(3, noteDurations.Count);
+            Assert.AreEqual(0.1875M, noteDurations[0].Duration);
+            Assert.AreEqual(NoteDuration.LinkType.Start, noteDurations[0].Tie);
+            Assert.AreEqual(0.25M, noteDurations[1].Duration);
+            Assert.AreEqual(NoteDuration.LinkType.Continue, noteDurations[1].Tie);
+            Assert.AreEqual(0.0625M, noteDurations[2].Duration);
+            Assert.AreEqual(NoteDuration.LinkType.End, noteDurations[2].Tie);
         }
 
-        private void Compare(List<Note> first, List<Note> second)
+        private void Compare(SongOutput first, SongOutput second)
         {
-            Assert.AreEqual(first.Count, second.Count);
-            for (int loop = 0; loop < first.Count; loop++)
+            Assert.AreEqual(first.Melody.Count, second.Melody.Count);
+            for (int loop = 0; loop < first.Melody.Count; loop++)
             {
-                Note firstNote = first[loop];
-                Note secondNote = second[loop];
+                Note firstNote = first.Melody[loop];
+                Note secondNote = second.Melody[loop];
                 Assert.AreEqual(firstNote.Dot, secondNote.Dot);
                 Assert.AreEqual(firstNote.Duration, secondNote.Duration);
                 Assert.AreEqual(firstNote.LastOfMeasure, secondNote.LastOfMeasure);
-                Assert.AreEqual(firstNote.Name, secondNote.Name);
                 Assert.AreEqual(firstNote.NoteLength, secondNote.NoteLength);
-                Assert.AreEqual(firstNote.Offset, secondNote.Offset);
                 Assert.AreEqual(firstNote.Tie, secondNote.Tie);
+                Assert.AreEqual(firstNote.Pitch.Name, secondNote.Pitch.Name);
+                Assert.AreEqual(firstNote.Pitch.Offset, secondNote.Pitch.Offset);
+                Assert.AreEqual(firstNote.Pitch.MidiNumber, secondNote.Pitch.MidiNumber);
+            }
+            if (first.Chords == null)
+            {
+                Assert.IsNull(second.Chords);
+            }
+            else
+            {
+                Assert.AreEqual(first.Chords.Count, second.Chords.Count);
+                for (int loop = 0; loop < first.Chords.Count; loop++)
+                {
+                    Chord firstChord = first.Chords[loop];
+                    Chord secondChord = second.Chords[loop];
+                    Assert.AreEqual(firstChord.NotePitches.Count, secondChord.NotePitches.Count);
+                    Assert.AreEqual(firstChord.FullName, secondChord.FullName);
+                    Assert.AreEqual(firstChord.Classification, secondChord.Classification);
+                    for (int noteLoop = 0; noteLoop < firstChord.NotePitches.Count; noteLoop++)
+                    {
+                        NotePitch firstNote = firstChord.NotePitches[noteLoop];
+                        NotePitch secondNote = secondChord.NotePitches[noteLoop];
+                        Assert.AreEqual(firstNote.FullName, secondNote.FullName);
+                        Assert.AreEqual(firstNote.MidiNumber, secondNote.MidiNumber);
+                        Assert.AreEqual(firstNote.Name, secondNote.Name);
+                        Assert.AreEqual(firstNote.Octave, secondNote.Octave);
+                        Assert.AreEqual(firstNote.Offset, secondNote.Offset);
+                    }
+                }
             }
         }
 
         [TestMethod]
         public void CreateSongPart_TwoInvocationsDifferentInstance_SameResults()
         {
-            SongData songData = GetSongData(4);
+            SongInput songData = GetSongInput(4);
             SongPartGenerator generator = new SongPartGenerator(songData);
-            List<Note> firstResult = generator.CreateSongPart();
+            SongOutput firstResult = generator.CreateSongPart();
             generator = new SongPartGenerator(songData);
-            List<Note> secondResult = generator.CreateSongPart();
+            SongOutput secondResult = generator.CreateSongPart();
             Compare(firstResult, secondResult);
         }
         [TestMethod]
         public void CreateSongPart_TwoInvocationsSameInstance_SameResults()
         {
-            SongData songData = GetSongData(4);
+            SongInput songData = GetSongInput(4);
             SongPartGenerator generator = new SongPartGenerator(songData);
-            List<Note> firstResult = generator.CreateSongPart();
-            List<Note> secondResult = generator.CreateSongPart();
+            SongOutput firstResult = generator.CreateSongPart();
+            SongOutput secondResult = generator.CreateSongPart();
             Compare(firstResult, secondResult);
+        }
+
+        [TestMethod]
+        public void DetermineChords_CEGB_Cmajor7()
+        {
+            SongInput songInput = GetSongInput(4);
+            songInput.Major = true;
+            SongPartGenerator generator = new SongPartGenerator(songInput);
+            List<Chord> chords = generator.DetermineChords(new List<Note>()
+            {
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("C")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("G")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("E")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("B")) { MeasureNumber = 1 }
+            });
+            Assert.AreEqual("Cmaj7", chords[0].FullName);
+        }
+        [TestMethod]
+        public void DetermineChords_EGB_Cmajor()
+        {
+            SongInput songInput = GetSongInput(4);
+            songInput.Major = true;
+            SongPartGenerator generator = new SongPartGenerator(songInput);
+            List<Chord> chords = generator.DetermineChords(new List<Note>()
+            {
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("C")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("D")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("G")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("E")) { MeasureNumber = 1 },
+            });
+            Assert.AreEqual("C", chords[0].FullName);
+        }
+        [TestMethod]
+        public void DetermineChords_AbDbCDb_Am7()
+        {
+            // s p  s  s p  s  s
+            //F G Ab Bb C Db Eb F
+            //Bb Db F Ab
+            SongInput songInput = GetSongInput(4);
+            songInput.Major = false;
+            songInput.ScaleKeyFullName = "F";
+            SongPartGenerator generator = new SongPartGenerator(songInput);
+            List<Chord> chords = generator.DetermineChords(new List<Note>()
+            {
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("Ab")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("Bb")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("F")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("Db")) { MeasureNumber = 1 },
+            });
+            Assert.AreEqual("Bbm7", chords[0].FullName);
+        }
+        [TestMethod]
+        public void DetermineChords_AbDbCD_Bbm()
+        {
+            //Chord would be Bbmmaj7, but it is not in Chord F minor degrees
+            SongInput songInput = GetSongInput(4);
+            songInput.Major = false;
+            songInput.ScaleKeyFullName = "F";
+            SongPartGenerator generator = new SongPartGenerator(songInput);
+            List<Chord> chords = generator.DetermineChords(new List<Note>()
+            {
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("Bb")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("B")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("F")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("Db")) { MeasureNumber = 1 },
+            });
+            Assert.AreEqual("Bbm", chords[0].FullName);
         }
     }
 }
