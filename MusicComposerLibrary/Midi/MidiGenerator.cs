@@ -2,36 +2,39 @@
 using MusicComposerLibrary.Storage;
 using MusicComposerLibrary.Structures;
 using MusicComposerLibrary.Extensions;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using Melanchall.DryWetMidi.Common;
 
 namespace MusicComposerLibrary.Midi
 {
     public class MidiGenerator : FileGeneratorBase
     {
-        public MidiGenerator(SongData songData) : base(songData) { }
+        public MidiGenerator(SongInput songData) : base(songData) { }
 
-        public override void WriteToStream(List<Note> notes, Stream target)
+        public override void WriteToStream(SongOutput songOutput, Stream target)
         {
             MidiFile file = new MidiFile
             {
                 TimeDivision = new TicksPerQuarterNoteTimeDivision(480)
             };
-            TrackChunk trackChunk = new TrackChunk();
-            file.Chunks.Add(trackChunk);
-            AddToMidiChunk(notes, trackChunk);
+            TrackChunk melodyTrack = new TrackChunk();
+            InitEvents(melodyTrack.Events);
+            MidiConverter.AddMelodyEvents(melodyTrack.Events, songOutput.Melody);
+            file.Chunks.Add(melodyTrack);
+            if (Input.Chords)
+            {
+                TrackChunk chordTrack = new TrackChunk();
+                InitEvents(chordTrack.Events);
+                MidiConverter.AddChordEvents(chordTrack.Events, songOutput.Chords);
+                file.Chunks.Add(chordTrack);
+            }
             file.Write(target);
         }
-
-        private void AddToMidiChunk(List<Note> notes, TrackChunk trackChunk)
+        private void InitEvents(EventsCollection events)
         {
-            trackChunk.Events.Add(new TimeSignatureEvent((byte)SongData.BeatsPerMeasure, (byte)SongData.GetBeatType(), 24, 8));
-            trackChunk.Events.Add(new KeySignatureEvent((sbyte)SongData.GetKey(), 0));
-            trackChunk.Events.Add(new SetTempoEvent(500000));
-            MidiConverter.AddNotesToChunks(trackChunk.Events, notes);
+            events.Add(new TimeSignatureEvent((byte)Input.BeatsPerMeasure, (byte)Input.GetBeatType(), 24, 8));
+            events.Add(new KeySignatureEvent(
+                (sbyte)new Structures.Scale(new Structures.NotePitch(Input.ScaleKeyFullName), Input.Major).Key, 0));
+            events.Add(new SetTempoEvent(500000));
         }
     }
 }

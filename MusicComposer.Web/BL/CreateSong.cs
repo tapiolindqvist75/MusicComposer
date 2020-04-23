@@ -3,30 +3,33 @@ using MusicComposerLibrary.Storage;
 using MusicComposerLibrary.Structures;
 using System.IO;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
 
 namespace MusicComposer.Web.BL
 {
     public class CreateSong
     {
-        private static string GetCacheKey(string name, string songName)
+        private static string GetCacheKey(string name, string songName, string type)
         {
-            return $"Song{name}{songName}";
+            return $"Song{name}{songName}{type}";
         }
 
-        public static void CreateAndStoreSong(SongData songData, IStorageHandler storageHandler, IMemoryCache memoryCache)
+        public static void CreateAndStoreSong(SongInput songData, IStorageHandler storageHandler, IMemoryCache memoryCache)
         {
-            storageHandler.SaveSongData(songData);
-            memoryCache.Set<SongData>(GetCacheKey(songData.Name, songData.SongName), songData);
+            if (storageHandler != null)
+                storageHandler.SaveSongData(songData);
+            memoryCache.Set<SongInput>(GetCacheKey(songData.Name, songData.SongName, nameof(songData)), songData);
         }
 
-        private static SongData GetSongData(string name, string songName, IStorageHandler storageHandler, IMemoryCache memoryCache)
+        private static SongInput GetSongData(string name, string songName, IStorageHandler storageHandler, IMemoryCache memoryCache)
         {
-            SongData songData;
-            if (!memoryCache.TryGetValue<SongData>(GetCacheKey(name, songName), out songData))
-                songData = storageHandler.RetrieveSongData(name, songName);
+            SongInput songData;
+            if (!memoryCache.TryGetValue<SongInput>(GetCacheKey(name, songName, nameof(songData)), out songData))
+            {
+                if (storageHandler != null)
+                    songData = storageHandler.RetrieveSongData(name, songName);
+                else
+                    return null;
+            }
             return songData;
         }
 
@@ -34,19 +37,22 @@ namespace MusicComposer.Web.BL
             IStorageHandler storageHandler, IMemoryCache memoryCache)
         {
             MemoryStream memoryStream = new MemoryStream();
-            SongData songData = GetSongData(name, songName, storageHandler, memoryCache);
-            byte[] musicXmlBytes;
-            if (!memoryCache.TryGetValue<byte[]>(GetCacheKey(name, songName), out musicXmlBytes))
+            SongInput songData = GetSongData(name, songName, storageHandler, memoryCache);
+            if (songData == null)
+                return null;
+            if (!memoryCache.TryGetValue<byte[]>(GetCacheKey(name, songName, fileType.ToString()), out byte[] fileBytes))
             {
                 SongPartGenerator generator = new SongPartGenerator(songData);
-                List<Note> notes = generator.CreateSongPart();
-                generator.WriteToStream(fileType, notes,  memoryStream);
+                SongOutput songOutput = generator.CreateSongPart();
+                generator.WriteToStream(fileType, songOutput, memoryStream);
                 memoryStream.Seek(0, SeekOrigin.Begin);
-                musicXmlBytes = new byte[memoryStream.Length];
-                memoryStream.Read(musicXmlBytes, 0, (int)memoryStream.Length);
-                storageHandler.SetFileCreated(name, songName, fileType);
+                fileBytes = new byte[memoryStream.Length];
+                memoryStream.Read(fileBytes, 0, (int)memoryStream.Length);
+                memoryCache.Set<byte[]>(GetCacheKey(name, songName, fileType.ToString()), fileBytes);
+                if (storageHandler != null)
+                    storageHandler.SetFileCreated(name, songName, fileType);
             }
-            return musicXmlBytes;
+            return fileBytes;
         }
     }
 }

@@ -5,9 +5,6 @@ using MusicComposerLibrary.Storage;
 using MusicComposerLibrary.Storage.Azure;
 using System;
 using Azure.Security.KeyVault.Secrets;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
 namespace MusicComposer.Web.BL
@@ -53,7 +50,9 @@ namespace MusicComposer.Web.BL
                         parameters.UseEmulator = true;
                     return StorageFactory.GetStorage(parameters);
                 }
-                throw new NotImplementedException("Storage type invalid or not specified");
+                else
+                    return null;
+                //throw new NotImplementedException("Storage type invalid or not specified");
             }
             catch (Exception ex)
             {

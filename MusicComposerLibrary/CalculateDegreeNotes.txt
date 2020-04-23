@@ -1,0 +1,39 @@
+private List<NotePitch> CalculateDegreeNotes(string root, int key)
+        {
+            List<string> array = new List<string> { "C", "D", "E", "F", "G", "A", "B" };
+            if (key > 0)
+            {
+                int position = 65; //F
+                for (int loop = 0; loop < key; loop++)
+                {
+                    string noteToSharpen = new NotePitch(position, true).FullName;
+                    array = array.Select(note => note.Replace(noteToSharpen, noteToSharpen + "#")).ToList();
+                    position -= 5;
+                    if (position < 60)
+                        position +=+ 12;
+                }
+            }
+            else if (key < 0)
+            {
+                int position = 71; //B
+                for (int loop = 0; loop > key; loop--)
+                {
+                    string noteToFlatten = new NotePitch(position, false).FullName;
+                    array = array.Select(note => note.Replace(noteToFlatten, noteToFlatten + "b")).ToList();
+                    position += 5;
+                    if (position > 72)
+                        position -= 12;
+                }
+
+            }
+            List<NotePitch> degreeNotes = new List<NotePitch>();
+            int index = array.IndexOf(root);
+            for(int loop = 0; loop < 7; loop++)
+            {
+                degreeNotes.Add(new NotePitch(array[index]));
+                index++;
+                if (index > 6)
+                    index = 0;
+            }
+            return degreeNotes;
+        }
