@@ -1,6 +1,6 @@
 # MusicComposer
 
-Application / library which generates random music 
+Application / library which generates random music. One version of web site is published at http://musiccomposer.metapsa.com/ (not always the master branch / latest version)
 
 ## Current version
 
