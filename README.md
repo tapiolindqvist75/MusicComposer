@@ -9,7 +9,7 @@ Current release composes random music using some rudimentary music theory rules.
 -	last note of each measure is more likely to be eiter Tonic, Mediant or Dominant. 
 - chords are assigned by comparing chord notes to measure notes.
 
-Program generates MusicXml file or Midi file. Files have been made and tested only with MuseScore application. Music is generated only in C-major and C-minor. 
+Program generates MusicXml file or Midi file. Files have been made and tested only with MuseScore, Sibelius and Flat.io (doesn't support two staffs so only without chords works) applications. 
 
 ## Future versions
 
@@ -20,3 +20,4 @@ Roadmap / features to be implemented. Not necessary in this order
 4.  Adding rests to music so melody can be sung
 5.  Mobile application(s)
 6.  Combining parts to make a full song applying cadences.
+7.  Chord assignment logic improvements. Preventing some dissonances.
