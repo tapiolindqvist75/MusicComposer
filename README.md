@@ -19,5 +19,5 @@ Roadmap / features to be implemented. Not necessary in this order
 3.  Generating music from by chord first order. Using common progression varioations etc. 
 4.  Adding rests to music so melody can be sung
 5.  Mobile application(s)
-6.  Combining parts to make a full song applying cadences.
-7.  Chord assignment logic improvements. Preventing some dissonances.
+6.  Combining parts to make a full song by applying cadences.
+7.  Chord assignment logic improvements. Preventing some dissonances. (ideas on this appreciated)
