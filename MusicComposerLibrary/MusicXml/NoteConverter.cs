@@ -31,6 +31,7 @@ namespace MusicComposerLibrary.MusicXml
         {
             return note.NoteLength switch
             {
+                NoteDuration.NoteLengthType.Full => notetypevalue.whole,
                 NoteDuration.NoteLengthType.Half => notetypevalue.half,
                 NoteDuration.NoteLengthType.Quarter => notetypevalue.quarter,
                 NoteDuration.NoteLengthType.Eigth => notetypevalue.eighth,
@@ -49,7 +50,7 @@ namespace MusicComposerLibrary.MusicXml
                 _ => throw new Exception("Invalid usage"),
             };
         }
-        public note GetMusicXmlNote(bool chord, int staff, int voice)
+        public note GetMusicXmlNote(bool chord, int voice)
         {
             note note = new note();
             if (_note.Beam != NoteDuration.LinkType.None)
@@ -66,7 +67,6 @@ namespace MusicComposerLibrary.MusicXml
             items.Add(pitch);
             itemChoices.Add(ItemsChoiceType1.duration);
             items.Add((decimal)GetDuration());
-            note.staff = staff.ToString();
             note.voice = voice.ToString();
             if (_note.Tie != NoteDuration.LinkType.None)
             {

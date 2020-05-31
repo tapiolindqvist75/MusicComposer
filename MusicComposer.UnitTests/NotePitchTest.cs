@@ -12,114 +12,114 @@ namespace MusicComposer.UnitTests
         [TestMethod]
         public void MidiNumber_C_60()
         {
-            NotePitch notePitch = new NotePitch("C");
+            NotePitch notePitch = new NotePitch("C", 4);
             Assert.AreEqual(60, notePitch.MidiNumber);
         }
         [TestMethod]
         public void MidiNumber_Cis_61()
         {
-            NotePitch notePitch = new NotePitch("C#");
+            NotePitch notePitch = new NotePitch("C#", 4);
             Assert.AreEqual(61, notePitch.MidiNumber);
         }
         [TestMethod]
         public void MidiNumber_Des_61()
         {
-            NotePitch notePitch = new NotePitch("Db");
+            NotePitch notePitch = new NotePitch("Db", 4);
             Assert.AreEqual(61, notePitch.MidiNumber);
         }
         [TestMethod]
         public void MidiNumber_D_62()
         {
-            NotePitch notePitch = new NotePitch("D");
+            NotePitch notePitch = new NotePitch("D", 4);
             Assert.AreEqual(62, notePitch.MidiNumber);
         }
         [TestMethod]
         public void MidiNumber_Dis_63()
         {
-            NotePitch notePitch = new NotePitch("D#");
+            NotePitch notePitch = new NotePitch("D#", 4);
             Assert.AreEqual(63, notePitch.MidiNumber);
         }
         [TestMethod]
         public void MidiNumber_Es_63()
         {
-            NotePitch notePitch = new NotePitch("Eb");
+            NotePitch notePitch = new NotePitch("Eb", 4);
             Assert.AreEqual(63, notePitch.MidiNumber);
         }
         [TestMethod]
         public void MidiNumber_E_64()
         {
-            NotePitch notePitch = new NotePitch("E");
+            NotePitch notePitch = new NotePitch("E", 4);
             Assert.AreEqual(64, notePitch.MidiNumber);
         }
         [TestMethod]
         public void MidiNumber_F_65()
         {
-            NotePitch notePitch = new NotePitch("F");
+            NotePitch notePitch = new NotePitch("F", 4);
             Assert.AreEqual(65, notePitch.MidiNumber);
         }
         [TestMethod]
         public void MidiNumber_Fis_66()
         {
-            NotePitch notePitch = new NotePitch("F#");
+            NotePitch notePitch = new NotePitch("F#",4);
             Assert.AreEqual(66, notePitch.MidiNumber);
         }
         [TestMethod]
         public void MidiNumber_Ges_66()
         {
-            NotePitch notePitch = new NotePitch("Gb");
+            NotePitch notePitch = new NotePitch("Gb",4);
             Assert.AreEqual(66, notePitch.MidiNumber);
         }
         [TestMethod]
         public void MidiNumber_G_67()
         {
-            NotePitch notePitch = new NotePitch("G");
+            NotePitch notePitch = new NotePitch("G",4);
             Assert.AreEqual(67, notePitch.MidiNumber);
         }
         [TestMethod]
         public void MidiNumber_Gis_68()
         {
-            NotePitch notePitch = new NotePitch("G#");
+            NotePitch notePitch = new NotePitch("G#",4);
             Assert.AreEqual(68, notePitch.MidiNumber);
         }
         [TestMethod]
         public void MidiNumber_As_68()
         {
-            NotePitch notePitch = new NotePitch("Ab");
+            NotePitch notePitch = new NotePitch("Ab",4);
             Assert.AreEqual(68, notePitch.MidiNumber);
         }
         [TestMethod]
         public void MidiNumber_A_69()
         {
-            NotePitch notePitch = new NotePitch("A");
+            NotePitch notePitch = new NotePitch("A",4);
             Assert.AreEqual(69, notePitch.MidiNumber);
         }
         [TestMethod]
         public void MidiNumber_Ais_70()
         {
-            NotePitch notePitch = new NotePitch("A#");
+            NotePitch notePitch = new NotePitch("A#",4);
             Assert.AreEqual(70, notePitch.MidiNumber);
         }
         [TestMethod]
         public void MidiNumber_Bb_70()
         {
-            NotePitch notePitch = new NotePitch("Bb");
+            NotePitch notePitch = new NotePitch("Bb",4);
             Assert.AreEqual(70, notePitch.MidiNumber);
         }
         [TestMethod]
         public void MidiNumber_B_71()
         {
-            NotePitch notePitch = new NotePitch("B");
+            NotePitch notePitch = new NotePitch("B",4);
             Assert.AreEqual(71, notePitch.MidiNumber);
         }
         [TestMethod]
         public void MidiNumber_GisisString_69()
         {
-            NotePitch notePitch = new NotePitch("G##");
+            NotePitch notePitch = new NotePitch("G##",4);
             Assert.AreEqual(69, notePitch.MidiNumber);
         }
         public void MidiNumber_GesesString_65()
         {
-            NotePitch notePitch = new NotePitch("Gbb");
+            NotePitch notePitch = new NotePitch("Gbb",4);
             Assert.AreEqual(69, notePitch.MidiNumber);
         }
 

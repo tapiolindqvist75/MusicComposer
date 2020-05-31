@@ -9,7 +9,8 @@ namespace MusicComposer.UnitTests
     [TestClass]
     public class SongPartGeneratorTest
     {
-        private SongInput GetSongInput(int beatsPerMeasure)
+        private SongInput GetSongInput(int beatsPerMeasure, string scaleKeyFullName = "C",
+            string melodyLowestNoteFullNameWithOctave = null, string melodyHighestNoteFullNameWithOctave = null)
         {
             return new SongInput()
             {
@@ -18,7 +19,9 @@ namespace MusicComposer.UnitTests
                 BeatUnit = NoteDuration.NoteLengthType.Quarter,
                 SongName = "Test",
                 Name = "Test",
-                ScaleKeyFullName = "C",
+                MelodyLowestNoteFullNameWithOctave = melodyLowestNoteFullNameWithOctave,
+                MelodyHighestNoteFullNameWithOctave = melodyHighestNoteFullNameWithOctave,
+                ScaleKeyFullName = scaleKeyFullName,
                 Values = WeightedRandom.GetRandomValues(),
                 WeightData = WeightData.GetDefaults(),
                 Chords = true
@@ -169,6 +172,33 @@ namespace MusicComposer.UnitTests
         }
 
         [TestMethod]
+        public void GetLastNotePitch_StandardC_C5()
+        {
+            SongInput songData = GetSongInput(4);
+            SongPartGenerator generator = new SongPartGenerator(songData);
+            NotePitch pitch = generator.GetLastNotePitch();
+            Assert.AreEqual("C5", pitch.FullNameWithOctave);
+        }
+
+        [TestMethod]
+        public void GetLastNotePitch_StandardB_B4()
+        {
+            SongInput songData = GetSongInput(4, scaleKeyFullName: "B");
+            SongPartGenerator generator = new SongPartGenerator(songData);
+            NotePitch pitch = generator.GetLastNotePitch();
+            Assert.AreEqual("B4", pitch.FullNameWithOctave);
+        }
+
+        [TestMethod]
+        public void GetLastNotePitch_FromC3toC4KeyE_E3()
+        {
+            SongInput songData = GetSongInput(4, scaleKeyFullName: "E", melodyLowestNoteFullNameWithOctave: "C3", melodyHighestNoteFullNameWithOctave: "C4");
+            SongPartGenerator generator = new SongPartGenerator(songData);
+            NotePitch pitch = generator.GetLastNotePitch();
+            Assert.AreEqual("E3", pitch.FullNameWithOctave);
+        }
+
+        [TestMethod]
         public void CreateSongPart_TwoInvocationsDifferentInstance_SameResults()
         {
             SongInput songData = GetSongInput(4);
@@ -196,10 +226,10 @@ namespace MusicComposer.UnitTests
             SongPartGenerator generator = new SongPartGenerator(songInput);
             List<Chord> chords = generator.DetermineChords(new List<Note>()
             {
-                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("C")) { MeasureNumber = 1 },
-                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("G")) { MeasureNumber = 1 },
-                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("E")) { MeasureNumber = 1 },
-                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("B")) { MeasureNumber = 1 }
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("C4")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("G4")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("E4")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("B4")) { MeasureNumber = 1 }
             });
             Assert.AreEqual("Cmaj7", chords[0].FullName);
         }
@@ -211,10 +241,10 @@ namespace MusicComposer.UnitTests
             SongPartGenerator generator = new SongPartGenerator(songInput);
             List<Chord> chords = generator.DetermineChords(new List<Note>()
             {
-                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("C")) { MeasureNumber = 1 },
-                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("D")) { MeasureNumber = 1 },
-                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("G")) { MeasureNumber = 1 },
-                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("E")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("C4")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("D4")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("G4")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("E4")) { MeasureNumber = 1 },
             });
             Assert.AreEqual("C", chords[0].FullName);
         }
@@ -230,10 +260,10 @@ namespace MusicComposer.UnitTests
             SongPartGenerator generator = new SongPartGenerator(songInput);
             List<Chord> chords = generator.DetermineChords(new List<Note>()
             {
-                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("Ab")) { MeasureNumber = 1 },
-                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("Bb")) { MeasureNumber = 1 },
-                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("F")) { MeasureNumber = 1 },
-                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("Db")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("Ab4")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("Bb4")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("F4")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("Db4")) { MeasureNumber = 1 },
             });
             Assert.AreEqual("Bbm7", chords[0].FullName);
         }
@@ -247,10 +277,10 @@ namespace MusicComposer.UnitTests
             SongPartGenerator generator = new SongPartGenerator(songInput);
             List<Chord> chords = generator.DetermineChords(new List<Note>()
             {
-                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("Bb")) { MeasureNumber = 1 },
-                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("B")) { MeasureNumber = 1 },
-                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("F")) { MeasureNumber = 1 },
-                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("Db")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("Bb4")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("B4")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("F4")) { MeasureNumber = 1 },
+                new Note(new NoteDuration(NoteDuration.NoteLengthType.Quarter, false, NoteDuration.LinkType.None), new NotePitch("Db4")) { MeasureNumber = 1 },
             });
             Assert.AreEqual("Bbm", chords[0].FullName);
         }

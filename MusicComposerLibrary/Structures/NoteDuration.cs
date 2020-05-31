@@ -48,7 +48,11 @@ namespace MusicComposerLibrary.Structures
 
         public static NoteDuration DurationToNote(decimal duration, out decimal extra)
         {
-            NoteDuration noteDuration = CompareAndReturn(duration, 0.75M, NoteLengthType.Half, true, out extra);
+            NoteDuration noteDuration = CompareAndReturn(duration, 1.5M, NoteLengthType.Full, true, out extra);
+            if (noteDuration != null) return noteDuration;
+            noteDuration = CompareAndReturn(duration, 1M, NoteLengthType.Full, false, out extra);
+            if (noteDuration != null) return noteDuration;
+            noteDuration = CompareAndReturn(duration, 0.75M, NoteLengthType.Half, true, out extra);
             if (noteDuration != null) return noteDuration;
             noteDuration = CompareAndReturn(duration, 0.5M, NoteLengthType.Half, false, out extra);
             if (noteDuration != null) return noteDuration;

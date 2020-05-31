@@ -9,10 +9,8 @@ namespace MusicComposerLibrary.Storage
         public string SongName { get; set; }
         public bool Major { get; set; }
         public string ScaleKeyFullName { get; set; }
-        public string LowestNoteFullName { get; set; }
-        public int LowestNoteOctave { get; set; }
-        public string HighestNoteFullName { get; set; }
-        public int HighestNoteOctave { get; set; }
+        public string MelodyLowestNoteFullNameWithOctave { get; set; }
+        public string MelodyHighestNoteFullNameWithOctave { get; set; }
         public double[] Values { get; set; }
         public WeightData WeightData { get; set; }
         public int PartLength { get; set; }

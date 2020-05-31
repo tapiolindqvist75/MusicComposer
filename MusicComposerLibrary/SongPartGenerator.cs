@@ -17,7 +17,6 @@ namespace MusicComposerLibrary
         private readonly Structures.NotePitch _lowestPitch;
         private readonly Structures.NotePitch _highestPitch;
         public SongInput Input { get; private set; }
-
         public SongPartGenerator(SongInput songInput)
         {
             if (songInput == null)
@@ -29,18 +28,18 @@ namespace MusicComposerLibrary
             if (songInput.PartLength <= 0)
                 throw new ArgumentException($"{nameof(songInput.PartLength)} must be positive value");
             if (songInput.Major)
-                _scale = new Structures.Scale(new Structures.NotePitch(songInput.ScaleKeyFullName), true);
+                _scale = new Structures.Scale(new Structures.NotePitch(songInput.ScaleKeyFullName, 4), true);
             else
-                _scale = new Structures.Scale(new Structures.NotePitch(songInput.ScaleKeyFullName), false);
+                _scale = new Structures.Scale(new Structures.NotePitch(songInput.ScaleKeyFullName, 4), false);
 
-            if (string.IsNullOrWhiteSpace(songInput.LowestNoteFullName))
-                _lowestPitch = _scale.GetDegreePitch(1, 3);
+            if (string.IsNullOrWhiteSpace(songInput.MelodyLowestNoteFullNameWithOctave))
+                _lowestPitch = new Structures.NotePitch("A3");
             else
-                _lowestPitch = new Structures.NotePitch(songInput.LowestNoteFullName, songInput.LowestNoteOctave);
-            if (string.IsNullOrWhiteSpace(songInput.HighestNoteFullName))
-                _highestPitch = _scale.GetDegreePitch(1, 5);
+                _lowestPitch = new Structures.NotePitch(songInput.MelodyLowestNoteFullNameWithOctave);
+            if (string.IsNullOrWhiteSpace(songInput.MelodyHighestNoteFullNameWithOctave))
+                _highestPitch = new Structures.NotePitch("C6");
             else
-                _highestPitch = new Structures.NotePitch(songInput.HighestNoteFullName, songInput.HighestNoteOctave);
+                _highestPitch = new Structures.NotePitch(songInput.MelodyHighestNoteFullNameWithOctave);
 
             if (songInput.BeatsPerMeasure <= 0)
                 throw new ArgumentException($"{nameof(songInput.BeatsPerMeasure)} must be positive value");
@@ -154,6 +153,18 @@ namespace MusicComposerLibrary
                 }
             }
         }
+        public Structures.NotePitch GetLastNotePitch()
+        {
+            Tuple<int, Structures.NotePitch> minimumDifference = new Tuple<int, Structures.NotePitch>(int.MaxValue, null); 
+            for(int loop = _lowestPitch.Octave; loop < _highestPitch.Octave; loop++)
+            {
+                Structures.NotePitch current = _scale.GetDegreePitch(1, loop);
+                int difference = Math.Abs((current.MidiNumber - _lowestPitch.MidiNumber) - (_highestPitch.MidiNumber - current.MidiNumber));
+                if (difference < minimumDifference.Item1)
+                    minimumDifference = new Tuple<int, Structures.NotePitch>(difference, current);
+            }
+            return minimumDifference.Item2;
+        }
         private List<Structures.Note> AddMelody(WeightedRandom weightedRandom, List<Structures.NoteDuration> noteDurations)
         {
             List<Structures.Note> notes = new List<Structures.Note>();
@@ -172,7 +183,7 @@ namespace MusicComposerLibrary
                 if (loop == noteDurations.Count - 1) 
                 {
                     //Last note on key
-                    Structures.NotePitch notePitch = _scale.GetDegreePitch(1, 4);
+                    Structures.NotePitch notePitch = GetLastNotePitch();
                     notes.Add(new Structures.Note(noteDuration, notePitch));
                     latestNoteMidiNumber = notePitch.MidiNumber;
                     continue;
@@ -217,13 +228,35 @@ namespace MusicComposerLibrary
             return false;
         }
 
-        private decimal CompareChord(List<Structures.NotePitch> notes, Structures.Chord chord)
+        private decimal GetNoteWeight(Structures.Note note, Structures.Chord chord)
+        {
+            if (IsNoteInChord(note.Pitch, chord))
+                return note.Duration * Input.WeightData.ChordDetermination_ChordNote;
+            Structures.Scale scale = null;
+            if (chord.Classification == Structures.ChordClassification.Major ||
+                chord.Classification == Structures.ChordClassification.MajorSeventh)
+                scale = new Structures.Scale(chord.NotePitches[0], true);
+            else if (chord.Classification == Structures.ChordClassification.Minor ||
+                chord.Classification == Structures.ChordClassification.MinorSeventh)
+                scale = new Structures.Scale(chord.NotePitches[0], false);
+            if (scale != null)
+            {
+                int[] degrees = new int[] { 2, 4, 6, 7 };
+                foreach (int degree in degrees)
+                {
+                    if (scale.GetDegreePitch(degree).IsSameIgnoreOctave(note.Pitch))
+                        return note.Duration * Input.WeightData.ChordDetermination_ScaleNote;
+                }
+            }
+            return note.Duration * Input.WeightData.ChordDetermination_NonScaleNote;
+        }
+
+        private decimal CompareChord(IEnumerable<Structures.Note> notes, Structures.Chord chord)
         {
             decimal hits = 0;
-            foreach (Structures.NotePitch notePitch in notes)
-                if (IsNoteInChord(notePitch, chord))        
-                    hits++;
-            return hits / (decimal)notes.Count;
+            foreach (Structures.Note note in notes)
+                hits += GetNoteWeight(note, chord);
+            return hits;
         }
 
         public List<Structures.Chord> DetermineChords(List<Structures.Note> melodyNotes)
@@ -232,11 +265,11 @@ namespace MusicComposerLibrary
             IEnumerable<IGrouping<int, Structures.Note>> measures = melodyNotes.GroupBy(note => note.MeasureNumber);
             //First note of first measure must be in chord, sounds strange otherwise. 
             Structures.Note firstNoteUnhandled = melodyNotes.First();
+            Structures.Chord latestChord = null;
             foreach(IGrouping<int, Structures.Note> measureNotes in measures)
             {
                 List<int> degreeOrder = new List<int>() { 1, 5, 3, 2, 4, 6, 7 };
                 Tuple<decimal, Structures.Chord> bestMatch = new Tuple<decimal, Structures.Chord>(0, null);
-                List<Structures.NotePitch> notes = measureNotes.Select(note => note.Pitch).ToList();
                 foreach (int degree in degreeOrder)
                 {
                     if (bestMatch.Item1 == 1)
@@ -245,10 +278,12 @@ namespace MusicComposerLibrary
                     if (firstNoteUnhandled == null || IsNoteInChord(firstNoteUnhandled.Pitch, chord))
                     {
                         firstNoteUnhandled = null;
-                        decimal match = CompareChord(notes, chord);
-                        if (match > bestMatch.Item1)
+                        decimal match = CompareChord(measureNotes, chord);
+                        System.Diagnostics.Debug.WriteLine($"{chord.FullName} {match}");
+                        if (match > bestMatch.Item1 && (latestChord == null || chord.FullName != latestChord.FullName))
                             bestMatch = new Tuple<decimal, Structures.Chord>(match, chord);
                     }
+                    
                 }
                 foreach (int degree in degreeOrder)
                 {
@@ -257,19 +292,20 @@ namespace MusicComposerLibrary
                     Structures.Chord chord = _scale.GetDegreeSeventhChord(degree, new Structures.NotePitch("E", 3), 3);
                     if (firstNoteUnhandled == null || IsNoteInChord(firstNoteUnhandled.Pitch, chord))
                     {
-                        decimal match = CompareChord(notes, chord);
-                        if (match > bestMatch.Item1)
+                        decimal match = CompareChord(measureNotes, chord);
+                        System.Diagnostics.Debug.WriteLine($"{chord.FullName} {match}");
+                        if (match > bestMatch.Item1 && (latestChord == null || chord.FullName != latestChord.FullName))
                             bestMatch = new Tuple<decimal, Structures.Chord>(match, chord);
                     }
                 }
                 if (bestMatch.Item2 == null)
                     throw new Exception("Chord could not be resolved. Invalid input, best guess is that first note of the song is not non-scale note");
                 chords.Add(bestMatch.Item2);
+                latestChord = bestMatch.Item2;
                 measureNotes.First().Chord = bestMatch.Item2;
             }
             return chords;
         }
-
         public Structures.SongOutput CreateSongPart()
         {
             _weightedRandom.Reset();
@@ -285,7 +321,11 @@ namespace MusicComposerLibrary
             List<Structures.Note> notes = AddMelody(_weightedRandom, noteDurations);
             Structures.SongOutput songOutput = new Structures.SongOutput() { Scale = _scale, Melody = notes };
             if (Input.Chords)
+            {
                 songOutput.Chords = DetermineChords(notes);
+                decimal duration = Structures.NoteDuration.NoteToDuration(Input.BeatUnit) * Input.BeatsPerMeasure;
+                songOutput.ChordDuration = Structures.NoteDuration.DurationToNote(duration, out decimal extra);
+            }
             return songOutput;
         }
         public void WriteToStream(FileGeneratorBase.FileType fileType, Structures.SongOutput songOutput, Stream target)

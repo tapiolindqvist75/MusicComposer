@@ -340,3 +340,5 @@ ASALocalRun/
 healthchecksdb
 /MusicComposer.Web/Pages/Shared/Publish_Layout.cshtml
 /MusicComposer.Web/publish_appsettings.json
+/MusicComposer.Web/Pages/___IndexWithAds.cshtml
+/MusicComposer.Web/appsettings_aaa.json

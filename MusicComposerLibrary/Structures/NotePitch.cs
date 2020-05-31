@@ -7,12 +7,19 @@ namespace MusicComposerLibrary.Structures
 {
     public class NotePitch : IComparable<NotePitch>
     {
-        public NotePitch(string fullName, int octave = 4)
+        public NotePitch(string fullNameWithOctave)
+        {
+            string fullName = fullNameWithOctave.Substring(0, fullNameWithOctave.Length - 1);
+            int octave = Convert.ToInt32(fullNameWithOctave.Substring(fullName.Length));
+            InitFromFullName(fullName, octave);
+            MidiNumber = NoteToMidi(Name, Offset, octave);
+        }
+        public NotePitch(string fullName, int octave)
         {
             InitFromFullName(fullName, octave);
             MidiNumber = NoteToMidi(Name, Offset, octave);
         }
-        public NotePitch(char name, short offset, int octave = 4)
+        public NotePitch(char name, short offset, int octave)
         {
             Name = name;
             Offset = offset;
@@ -88,6 +95,11 @@ namespace MusicComposerLibrary.Structures
                 }
             }
         }
+
+        public string FullNameWithOctave
+        {
+            get { return FullName + Octave.ToString(); }
+        }
         private void InitFromFullName(string fullName, int octave)
         {
             Name = fullName[0];
@@ -103,6 +115,7 @@ namespace MusicComposerLibrary.Structures
                     default: throw new ArgumentException("Invalid fullName");
                 }
             }
+            Octave = octave;
         }
         public int CompareTo([AllowNull] NotePitch other)
         {

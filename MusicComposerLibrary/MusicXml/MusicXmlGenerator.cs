@@ -12,14 +12,17 @@ namespace MusicComposerLibrary.MusicXml
     public class MusicXmlGenerator : FileGeneratorBase
     {
         public MusicXmlGenerator(SongInput songData) : base(songData) { }
-        private attributes GetAttributes(bool twoClefs, int fifths)
+        private attributes GetAttributes(int fifths, bool chord)
         {
             List<clef> clefs = new List<clef>();
             attributes target = new attributes
             {
                 key = new key[] { new key() { ItemsElementName = new ItemsChoiceType8[] { ItemsChoiceType8.fifths }, Items = new object[] { fifths.ToString() } } }
             };
-            clefs.Add(new clef() { number = "1", sign = clefsign.G, line = "2" });
+            if (chord)
+                target.clef = new clef[] { new clef() { number = "2", sign = clefsign.F, line = "4" } };
+            else
+                target.clef = new clef[] { new clef() { number = "1", sign = clefsign.G, line = "2" } };
             target.time = new time[]
             {
                 new time()
@@ -32,15 +35,6 @@ namespace MusicComposerLibrary.MusicXml
                     }
                 }
             };
-            if (twoClefs)
-            {
-                target.divisionsSpecified = true;
-                target.divisions = 2;
-                target.staves = "2";
-                clefs.Add(new clef() { number = "2", sign = clefsign.F, line = "4" });
-            }
-
-            target.clef = clefs.ToArray();
             return target;
         }
 
@@ -78,7 +72,7 @@ namespace MusicComposerLibrary.MusicXml
                 List<object> measureItems = new List<object>();
                 if (firstNote)
                 {
-                    measureItems.Add(GetAttributes(Input.Chords, fifths));
+                    measureItems.Add(GetAttributes(fifths, false));
                     firstNote = false;
                 }
                 Note currentNote = notes[noteLoop];
@@ -117,7 +111,7 @@ namespace MusicComposerLibrary.MusicXml
                 foreach(Note note in notesByMeasure)
                 { 
                     NoteConverter currentConverter = new NoteConverter(note);
-                    measureItems.Add(currentConverter.GetMusicXmlNote(false, 1, 1));
+                    measureItems.Add(currentConverter.GetMusicXmlNote(false, 1));
                     measureLength += notes[noteLoop].Duration;
                     noteLoop++;
                 }
@@ -127,58 +121,39 @@ namespace MusicComposerLibrary.MusicXml
             return measures;
         }
 
-        private direction GetPPDynamicForChords2ndstaff()
+        private List<scorepartwisePartMeasure> GetChordMeasures(int fifths, List<Chord> chords, NoteDuration chordDuration)
         {
-            return new direction()
-            {
-                directiontype = new directiontype[]
-                {
-                    new directiontype()
-                    {
-                        ItemsElementName = new ItemsChoiceType7[] { ItemsChoiceType7.dynamics },
-                        Items = new object[]
-                        {
-                            new dynamics()
-                            {
-                               ItemsElementName = new ItemsChoiceType5[] { ItemsChoiceType5.pp },
-                               Items = new object[] { new empty() }
-                            }
-                        }
-                   }
-                },
-                staff = "2",
-                sound = new sound() { dynamics = 36.67M }
-            };
-        }
-
-        private void AddChords(List<Chord> chords, List<scorepartwisePartMeasure> measures)
-        {
+            List<scorepartwisePartMeasure> measures = new List<scorepartwisePartMeasure>();
+            bool firstNote = true;
             for(int measureLoop = 0; measureLoop < chords.Count; measureLoop++)
             {
-                scorepartwisePartMeasure measure = measures.Where(m => m.number == (measureLoop + 1).ToString()).Single();
-                List<object> measureItems = new List<object>(measure.Items)
+                scorepartwisePartMeasure measure = new scorepartwisePartMeasure()
                 {
-                    new backup() { duration = chords.Count * 2 },
-                    GetPPDynamicForChords2ndstaff()
+                    number = (measureLoop + 1).ToString()
                 };
-                NoteDuration quarter = new NoteDuration(base.Input.BeatUnit, false, NoteDuration.LinkType.None);
-                Chord current = chords[measureLoop];
-                for (int beatLoop = 0; beatLoop < base.Input.BeatsPerMeasure; beatLoop++)
+                List<object> measureItems = new List<object>();
+                if (firstNote)
                 {
-                    for (int noteLoop = 0; noteLoop < current.NotePitches.Count; noteLoop++)
-                    {
-                        NoteConverter converter = new NoteConverter(new Note(quarter, current.NotePitches[noteLoop]));
-                        measureItems.Add(converter.GetMusicXmlNote(noteLoop != 0, 2, 5));
-                    }
+                    measureItems.Add(GetAttributes(fifths, true));
+                    firstNote = false;
+                }
+                Chord current = chords[measureLoop];
+                for (int noteLoop = 0; noteLoop < current.NotePitches.Count; noteLoop++)
+                {
+                    NoteConverter converter = new NoteConverter(new Note(chordDuration, current.NotePitches[noteLoop]));
+                    measureItems.Add(converter.GetMusicXmlNote(noteLoop != 0, 5));
                 }
                 measure.Items = measureItems.ToArray();
+                measures.Add(measure);
             }
+            return measures;
         }
         public override void WriteToStream(SongOutput songOutput, Stream target)
         {
             List<scorepartwisePartMeasure> measures = GetMeasures(songOutput.Scale.Key, songOutput.Melody);
+            List<scorepartwisePartMeasure> chordMeasures = null;
             if (songOutput.Chords != null)
-                AddChords(songOutput.Chords, measures);
+                chordMeasures = GetChordMeasures(songOutput.Scale.Key, songOutput.Chords, songOutput.ChordDuration);
             XmlSerializer xmlSerializer = new XmlSerializer(typeof(scorepartwise));
             scorepartwise root = new scorepartwise() { version = "3.1" };
             root.work = new work() { worktitle = Input.SongName };
@@ -208,7 +183,7 @@ namespace MusicComposerLibrary.MusicXml
                         id = "P1-I1",
                         midichannel = "1",
                         midiprogram = "1",
-                        volume = 75
+                        volume = 78.7402M
                     }
                 }
                 }
@@ -221,32 +196,33 @@ namespace MusicComposerLibrary.MusicXml
                     measure = measures.ToArray()
                 }
             };
-            //if (chordMeasures != null)
-            //{
-            //    scoreparts.Add(new scorepart()
-            //    {
-            //        id = "P2",
-            //        partname = new partname() { Value = "Piano" },
-            //        partabbreviation = new partname() { Value = "Pno." },
-            //        scoreinstrument = new scoreinstrument[] { new scoreinstrument() { id = "P2-I1", instrumentname = "Piano" } },
-            //        mididevice = new mididevice[] { new mididevice() { id = "P2-I1", port = "1" } },
-            //        midiinstrument = new midiinstrument[]
-            //        {
-            //            new midiinstrument()
-            //            {
-            //                id = "P2-I1",
-            //                midichannel = "2",
-            //                midiprogram = "1",
-            //                volume = 25
-            //            }
-            //        }
-            //    });
-            //    parts.Add(new scorepartwisePart()
-            //    {
-            //        id = "P2",
-            //        measure = chordMeasures.ToArray()
-            //    });
-            //}
+            if (chordMeasures != null)
+            {
+                scoreparts.Add(new scorepart()
+                {
+                    id = "P2",
+                    partname = new partname() { Value = "Pad Synthesizer" },
+                    partabbreviation = new partname() { Value = "Synth." },
+                    scoreinstrument = new scoreinstrument[] { new scoreinstrument() { id = "P2-I1", instrumentname = "Pad Synthesizer" } },
+                    mididevice = new mididevice[] { new mididevice() { id = "P2-I1", port = "1" } },
+                    midiinstrument = new midiinstrument[]
+                    {
+                        new midiinstrument()
+                        {
+                            id = "P2-I1",
+                            midichannel = "4",
+                            midiprogram = "89",
+                            volume = 78.7402M,
+                            pan = 0
+                        }
+                    }
+                });
+                parts.Add(new scorepartwisePart()
+                {
+                    id = "P2",
+                    measure = chordMeasures.ToArray()
+                });
+            }
             root.partlist.Items = scoreparts.ToArray();
             root.part = parts.ToArray();
             xmlSerializer.Serialize(target, root);

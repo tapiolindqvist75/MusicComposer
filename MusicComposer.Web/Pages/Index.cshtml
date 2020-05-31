@@ -13,28 +13,30 @@
             <p>Write your name on the box below and I will generate short song / jingle for you. Jingle can be downloaded as .mid file or .musicxml. In basic mode you can choose a key from the list and wheter the song is generated with or withour chords. You can also choose to enter Advanced mode. Advanced mode contains more parameters for jingle generation.</p>
             <p>Jingle isn't meant to be used by itself, but it might help you compose a full song by using it as a part of your composition. Only thing I ask is that when downloading a genereted jingle. Please rate it.</p>
             <p>Web site stores jingle generation details. And if you rate all the jingles you generate. I might be able to tune the site to generate better songs/jingles later.</p>
+                                
             @if (Model.Mode == "Advanced")
             {
     <form method="post">
+        
         Name:
         <input asp-for="Name" required="required" pattern=".{1,}" />
         &nbsp;
         Key:
-        <select id="keys">
-            <option value="Cmajor" asp-for="Key">C-major</option>
-            <option value="Dmajor" asp-for="Key">D-major</option>
-            <option value="Emajor" asp-for="Key">E-major</option>
-            <option value="Fmajor" asp-for="Key">F-major</option>
-            <option value="Gmajor" selected="selected" asp-for="Key">G-major</option>
-            <option value="Amajor" asp-for="Key">A-major</option>
-            <option value="Bmajor" asp-for="Key">B-major</option>
-            <option value="Cminor" asp-for="Key">C-minor</option>
-            <option value="Dminor" asp-for="Key">D-minor</option>
-            <option value="Eminor" asp-for="Key">E-minor</option>
-            <option value="Fminor" asp-for="Key">F-minor</option>
-            <option value="Gminor" asp-for="Key">G-minor</option>
-            <option value="Aminor" asp-for="Key">A-minor</option>
-            <option value="Bminor" asp-for="Key">B-minor</option>
+        <select id="keys" asp-for="Key">
+            <option value="Cmajor">C-major</option>
+            <option value="Dmajor">D-major</option>
+            <option value="Emajor">E-major</option>
+            <option value="Fmajor">F-major</option>
+            <option value="Gmajor" selected="selected">G-major</option>
+            <option value="Amajor">A-major</option>
+            <option value="Bmajor">B-major</option>
+            <option value="Cminor">C-minor</option>
+            <option value="Dminor">D-minor</option>
+            <option value="Eminor">E-minor</option>
+            <option value="Fminor">F-minor</option>
+            <option value="Gminor">G-minor</option>
+            <option value="Aminor">A-minor</option>
+            <option value="Bminor">B-minor</option>
         </select>
         &nbsp;&nbsp;
         <select id="chords" asp-for="Chord">
@@ -47,6 +49,7 @@
                 <td width="200" colspan="2">Last note of each measure weights.</td>
                 <td width="200" colspan="2">Other note weights</td>
                 <td width="200" colspan="2">Note distance weights</td>
+                <td width="200" colspan="2">Chord determination weights</td>
             </tr>
             <tr>
                 <td>Half:</td>
@@ -57,6 +60,8 @@
                 <td><input type="number" min="0" max="999" asp-for="Weights.MiddleNonScale" /></td>
                 <td>Unison:</td>
                 <td><input type="number" min="0" max="999" asp-for="Weights.Distance_0" /></td>
+                <td>Chord note</td>
+                <td><input type="number" min="0" max="999" asp-for="Weights.ChordDetermination_ChordNote"/></td>
             </tr>
             <tr>
                 <td>Quarter:</td>
@@ -67,6 +72,8 @@
                 <td><input type="number" min="0" max="999" asp-for="Weights.MiddleScale" /></td>
                 <td>Minor second:</td>
                 <td><input type="number" min="0" max="999" asp-for="Weights.Distance_1" /></td>
+                <td>Scale note</td>
+                <td><input type="number" min="0" max="999" asp-for="Weights.ChordDetermination_ScaleNote" /></td>
             </tr>
             <tr>
                 <td>Eight:</td>
@@ -77,6 +84,8 @@
                 <td><input type="number" min="0" max="999" asp-for="Weights.MiddleTonic_1" /></td>
                 <td>Major second:</td>
                 <td><input type="number" min="0" max="999" asp-for="Weights.Distance_2" /></td>
+                <td>Non-scale note</td>
+                <td><input type="number" min="0" max="999" asp-for="Weights.ChordDetermination_NonScaleNote" /></td>
             </tr>
             <tr>
                 <td>Sixteenth:</td>

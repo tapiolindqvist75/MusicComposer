@@ -81,13 +81,13 @@ namespace MusicComposer.UnitTests
                     Struct.NoteDuration.NoteLengthType.Quarter,
                     false,
                     Struct.NoteDuration.LinkType.None),
-                new Struct.NotePitch('F', 1)),
+                new Struct.NotePitch('F', 1, 4)),
                 new Struct.Note(
                 new Struct.NoteDuration(
                     Struct.NoteDuration.NoteLengthType.Quarter,
                     false,
                     Struct.NoteDuration.LinkType.None),
-                new Struct.NotePitch('D', 0))
+                new Struct.NotePitch('D', 0, 4))
             };
             TrackChunk trackChunk = new TrackChunk();
             EventsCollection target = trackChunk.Events;
@@ -121,13 +121,13 @@ namespace MusicComposer.UnitTests
                     Struct.NoteDuration.NoteLengthType.Quarter,
                     false,
                     Struct.NoteDuration.LinkType.Start),
-                new Struct.NotePitch('A', 1)),
+                new Struct.NotePitch('A', 1, 4)),
                 new Struct.Note(
                 new Struct.NoteDuration(
                     Struct.NoteDuration.NoteLengthType.Quarter,
                     false,
                     Struct.NoteDuration.LinkType.End),
-                new Struct.NotePitch('A', 1))
+                new Struct.NotePitch('A', 1, 4))
             };
             TrackChunk trackChunk = new TrackChunk();
             EventsCollection target = trackChunk.Events;

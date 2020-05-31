@@ -31,7 +31,15 @@ namespace MusicComposerLibrary.Storage
         public int Distance_5 { get; set; }
         public int Distance_6 { get; set; }
         public int Distance_7 { get; set; }
-
+        public int ChordTonic_1 { get; set; }
+        public int ChordDominant_3 { get; set; }
+        public int ChordMediant_5 { get; set; }
+        public int ChordLedging_7 { get; set; }
+        public int ChordScale { get; set; }
+        public int ChordNonScale { get; set; }
+        public int ChordDetermination_ChordNote { get; set; }
+        public int ChordDetermination_ScaleNote { get; set; }
+        public int ChordDetermination_NonScaleNote { get; set; }
         public static WeightData GetDefaults()
         {
             WeightData weightData = new WeightData()
@@ -57,7 +65,10 @@ namespace MusicComposerLibrary.Storage
                 Distance_4 = 2,
                 Distance_5 = 1,
                 Distance_6 = 1,
-                Distance_7 = 1
+                Distance_7 = 1,
+                ChordDetermination_ChordNote = 20,
+                ChordDetermination_ScaleNote = 5,
+                ChordDetermination_NonScaleNote = 0
             };
             return weightData;
         }

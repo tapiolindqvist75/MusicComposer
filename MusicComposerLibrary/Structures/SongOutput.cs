@@ -9,5 +9,6 @@ namespace MusicComposerLibrary.Structures
         public Scale Scale { get; set; }
         public List<Note> Melody { get; set; }
         public List<Chord> Chords { get; set; }
+        public NoteDuration ChordDuration { get; set; }
     }
 }
