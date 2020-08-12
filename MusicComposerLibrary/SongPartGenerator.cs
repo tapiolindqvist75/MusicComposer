@@ -8,14 +8,12 @@ namespace MusicComposerLibrary
 {
     public class SongPartGenerator
     {
-        public decimal TotalLength { get; set; }
-        private readonly List<decimal> _beatStops;
-        private readonly decimal _measureLength;
         private readonly WeightedRandom _weightedRandom;
         private readonly Structures.Scale _scale;
         private readonly Weights _weights;
         private readonly Structures.NotePitch _lowestPitch;
         private readonly Structures.NotePitch _highestPitch;
+        private readonly Generators.RythmGenerator _rythmGenerator;
         public SongInput Input { get; private set; }
         public SongPartGenerator(SongInput songInput)
         {
@@ -52,109 +50,10 @@ namespace MusicComposerLibrary
             Input = songInput;
             _weightedRandom = new WeightedRandom(songInput.DurationValues, songInput.PitchValues);
             _weights = new Weights(songInput.WeightData);
-            TotalLength = 0;
-            _beatStops = new List<decimal>();
-            decimal stopPosition = 0;
-            for (int beatLoop = 0; beatLoop < songInput.BeatsPerMeasure; beatLoop++)
-            {
-                stopPosition += songInput.BeatUnit switch
-                {
-                    Structures.NoteDuration.NoteLengthType.Half => 0.5M,
-                    Structures.NoteDuration.NoteLengthType.Quarter => 0.25M,
-                    Structures.NoteDuration.NoteLengthType.Eigth => 0.125M,
-                    _ => throw new ArgumentException("Invalid beat unit, valid values are Half, Quarter and Eigth"),
-                };
-                _beatStops.Add(stopPosition);
-            }
-            _measureLength = stopPosition;
+            
+            _rythmGenerator = new Generators.RythmGenerator(_weightedRandom, _weights, songInput.PartLength, songInput.BeatsPerMeasure, songInput.BeatUnit);
         }
 
-        public decimal RemainingBeforeStop()
-        {
-            int measureCount = GetMeasureCount();
-            decimal fraction = TotalLength - (measureCount * _measureLength);
-            foreach (decimal stop in _beatStops)
-            {
-                if (stop > fraction)
-                    return stop - fraction;
-            }
-            //Should not happen
-            throw new Exception("Invalid definitions");
-        }
-
-        public decimal RemainingBeforeNextMeasure()
-        {
-            int measureCount = GetMeasureCount();
-            return (measureCount + 1) * _measureLength - TotalLength;
-        }
-
-        public int GetMeasureCount()
-        {
-            return Convert.ToInt32(Math.Floor(TotalLength / _measureLength));
-        }
-        public void AddNote(decimal duration, bool tie, bool lastNoteOfMeasure, List<Structures.NoteDuration> noteDurations)
-        {
-            //Total length exceeded, adjust to maximum length
-            if (duration + TotalLength > Input.PartLength)
-                AddNote(Input.PartLength - TotalLength, false, true, noteDurations);
-            else
-            {
-                decimal remainingBeforeStop = RemainingBeforeStop();
-                Structures.NoteDuration noteDuration;
-                decimal remaining;
-                if (remainingBeforeStop < duration)
-                {
-                    noteDuration = Structures.NoteDuration.DurationToNote(remainingBeforeStop, out _);
-                    remaining = duration - remainingBeforeStop;
-                }
-                else
-                {
-                    noteDuration = Structures.NoteDuration.DurationToNote(duration, out remaining);
-                }
-                noteDurations.Add(noteDuration);
-                noteDuration.MeasureNumber = GetMeasureCount();
-                if (RemainingBeforeNextMeasure() - noteDuration.Duration == 0)
-                    noteDuration.LastOfMeasure = true;
-                TotalLength += noteDuration.Duration;
-                if (tie)
-                {
-                    noteDuration.Tie = Structures.NoteDuration.LinkType.End;
-                    //If note is tied and it is tied to the last note of measure. Then it is the first note on next measure
-                    //But it needs to be treated as last according to weight
-                    //If note is tied and it is last note of measure, the weight must be according to the fact tied two notes combined are last note of measure
-                    //The tied note is not needed to be updated as last because melody is set in reverse order.
-                    if (lastNoteOfMeasure)
-                        noteDuration.LastOfMeasure = true;
-                }
-                if (remaining > 0)
-                {
-                    if (tie)
-                        noteDuration.Tie = Structures.NoteDuration.LinkType.Continue;
-                    else
-                        noteDuration.Tie = Structures.NoteDuration.LinkType.Start;
-                    AddNote(remaining, true, noteDuration.LastOfMeasure, noteDurations);
-                }
-            }
-        }
-
-        public void SetBeams(List<Structures.NoteDuration> noteDurations)
-        {
-            for(int loop = 0; loop < noteDurations.Count - 1; loop++)
-            {
-                Structures.NoteDuration current = noteDurations[loop];
-                Structures.NoteDuration next = noteDurations[loop + 1];
-                if (current.Beam != Structures.NoteDuration.LinkType.End && next.NoteLength == Structures.NoteDuration.NoteLengthType.Eigth)
-                {
-                    current.Beam = Structures.NoteDuration.LinkType.Continue;
-                    next.Beam = Structures.NoteDuration.LinkType.End;
-                }
-                else if (current.NoteLength == Structures.NoteDuration.NoteLengthType.Eigth && next.NoteLength == Structures.NoteDuration.NoteLengthType.Eigth)
-                {
-                    current.Beam = Structures.NoteDuration.LinkType.Start;
-                    next.Beam = Structures.NoteDuration.LinkType.End;
-                }
-            }
-        }
         public Structures.NotePitch GetLastNotePitch()
         {
             Tuple<int, Structures.NotePitch> minimumDifference = new Tuple<int, Structures.NotePitch>(int.MaxValue, null); 
@@ -315,16 +214,9 @@ namespace MusicComposerLibrary
         public Structures.SongOutput CreateSongPart()
         {
             _weightedRandom.Reset();
-            TotalLength = 0;
-            List<Structures.NoteDuration> noteDurations = new List<Structures.NoteDuration>();
-            while (TotalLength < Input.PartLength)
-            {
-                Structures.NoteDuration.NoteLengthType noteLengthType = _weightedRandom.GetRandomKey<Structures.NoteDuration.NoteLengthType>(WeightedRandom.RandomType.Pitch, _weights.LengthWeights);
-                decimal duration = new Structures.NoteDuration(noteLengthType, false, Structures.NoteDuration.LinkType.None).Duration;
-                AddNote(duration, false, false, noteDurations);
-            };
-            SetBeams(noteDurations);
-            List<Structures.Note> notes = AddMelody(_weightedRandom, noteDurations);
+
+            Structures.RythmOutput rythmOutput = _rythmGenerator.CreateNoteDurations();
+            List<Structures.Note> notes = AddMelody(_weightedRandom, rythmOutput.Durations);
             Structures.SongOutput songOutput = new Structures.SongOutput() { Scale = _scale, Melody = notes };
             if (Input.Chords)
             {
