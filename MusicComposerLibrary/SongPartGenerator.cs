@@ -43,12 +43,14 @@ namespace MusicComposerLibrary
 
             if (songInput.BeatsPerMeasure <= 0)
                 throw new ArgumentException($"{nameof(songInput.BeatsPerMeasure)} must be positive value");
-            if (songInput.Values == null)
-                throw new ArgumentNullException(nameof(songInput.Values));
+            if (songInput.DurationValues == null)
+                throw new ArgumentNullException(nameof(songInput.DurationValues));
+            if (songInput.PitchValues == null)
+                throw new ArgumentNullException(nameof(songInput.PitchValues));
             if (songInput.WeightData == null)
                 throw new ArgumentNullException(nameof(songInput.WeightData));
             Input = songInput;
-            _weightedRandom = new WeightedRandom(songInput.Values);
+            _weightedRandom = new WeightedRandom(songInput.DurationValues, songInput.PitchValues);
             _weights = new Weights(songInput.WeightData);
             TotalLength = 0;
             _beatStops = new List<decimal>();
@@ -210,7 +212,7 @@ namespace MusicComposerLibrary
                     adjustedWeights.Add(notePitch, Convert.ToInt32(Math.Round((decimal)noteWeights[notePitch] 
                         * (decimal)noteDistanceWeights[distance], MidpointRounding.AwayFromZero)));
                 }
-                Structures.NotePitch noteIndex = weightedRandom.GetRandomKey<Structures.NotePitch>(adjustedWeights);
+                Structures.NotePitch noteIndex = weightedRandom.GetRandomKey<Structures.NotePitch>(WeightedRandom.RandomType.Pitch, adjustedWeights);
                 latestNoteMidiNumber = noteIndex.MidiNumber;
                 notes.Add(new Structures.Note(noteDuration, new Structures.NotePitch(noteIndex.MidiNumber, _scale.Sharp)));
             }
@@ -299,7 +301,11 @@ namespace MusicComposerLibrary
                     }
                 }
                 if (bestMatch.Item2 == null)
-                    throw new Exception("Chord could not be resolved. Invalid input, best guess is that first note of the song is not non-scale note");
+                {
+                    //Chord could not be resolved. Invalid input, best guess is that first note of the song is non-scale note
+                    Structures.Chord chord = _scale.GetDegreeTriad(1, new Structures.NotePitch("F", 3), 3);
+                    bestMatch = new Tuple<decimal, Structures.Chord>(1, chord);
+                }
                 chords.Add(bestMatch.Item2);
                 latestChord = bestMatch.Item2;
                 measureNotes.First().Chord = bestMatch.Item2;
@@ -313,7 +319,7 @@ namespace MusicComposerLibrary
             List<Structures.NoteDuration> noteDurations = new List<Structures.NoteDuration>();
             while (TotalLength < Input.PartLength)
             {
-                Structures.NoteDuration.NoteLengthType noteLengthType = _weightedRandom.GetRandomKey<Structures.NoteDuration.NoteLengthType>(_weights.LengthWeights);
+                Structures.NoteDuration.NoteLengthType noteLengthType = _weightedRandom.GetRandomKey<Structures.NoteDuration.NoteLengthType>(WeightedRandom.RandomType.Pitch, _weights.LengthWeights);
                 decimal duration = new Structures.NoteDuration(noteLengthType, false, Structures.NoteDuration.LinkType.None).Duration;
                 AddNote(duration, false, false, noteDurations);
             };

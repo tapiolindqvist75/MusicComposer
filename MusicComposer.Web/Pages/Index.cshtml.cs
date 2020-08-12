@@ -59,7 +59,8 @@ namespace MusicComposer.Web.Pages
                 SongName = SongTitle,
                 PartLength = 4,
                 ScaleKeyFullName = Key.Substring(0, 1),
-                Values = WeightedRandom.GetRandomValues(),
+                DurationValues = WeightedRandom.GetRandomValues(10),
+                PitchValues = WeightedRandom.GetRandomValues(10),
                 Chords = (Chord == "Chords")
             };                     
             if (advanced)

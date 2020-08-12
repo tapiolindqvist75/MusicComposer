@@ -6,25 +6,40 @@ namespace MusicComposerLibrary
 {
     public class WeightedRandom
     {
-        double[] _randomValues;
-        int _index;
-        const int COUNT = 50;
-        public WeightedRandom(double[] values)
+        double[] _durationValues { get; set; }
+        int _durationIndex;
+        double[] _pitchValues { get; set; }
+        int _pitchIndex;
+        
+        public WeightedRandom(double[] durationValues, double[] pitchValues)
         {
-            _randomValues = values;
-            _index = 0;
+            _durationValues = durationValues;
+            _pitchValues = pitchValues;
         }
         public void Reset()
         {
-            _index = 0;
+            _durationIndex = 0;
+            _pitchIndex = 0;
         }
-        public T GetRandomKey<T>(Dictionary<T, int> weights)
+
+        public enum RandomType { Duration, Pitch }
+        public T GetRandomKey<T>(RandomType randomType, Dictionary<T, int> weights)
+        {
+            return randomType switch
+            {
+                RandomType.Duration => GetRandomKey<T>(weights, ref _durationIndex, _durationValues),
+                RandomType.Pitch => GetRandomKey<T>(weights, ref _pitchIndex, _pitchValues),
+                _ => throw new ArgumentException("Type must be either Duration or Pitch"),
+            };
+        }
+
+        private T GetRandomKey<T>(Dictionary<T, int> weights, ref int index, double[] values)
         {
             int totalWeights = weights.Values.Sum();
-            double randomDbl = (double)totalWeights * _randomValues[_index];
-            _index++;
-            if (_index >= COUNT)
-                _index = 0;
+            double randomDbl = (double)totalWeights * values[index];
+            index++;
+            if (index >= values.Length)
+                index = 0;
             int randomInt = Convert.ToInt32(Math.Floor(randomDbl));
             foreach(T key in weights.Keys)
             {
@@ -34,31 +49,11 @@ namespace MusicComposerLibrary
             }
             return weights.Keys.Last();
         }
-        public int GetRandomIndex(List<int> weights)
+        public static double[] GetRandomValues(int count)
         {
-            int totalWeights = weights.Sum();
-            double randomDbl = (double)totalWeights * _randomValues[_index];
-            _index++;
-            int randomInt = Convert.ToInt32(Math.Round(randomDbl, 0));
-            for(int loop=0;loop < weights.Count; loop++)
-            {
-                randomDbl -= weights[loop];
-                if (randomDbl < 0)
-                    return loop;
-            }
-            return weights.Count - 1;    
-        }
-        public bool GetRandomBool()
-        {
-            bool random = _randomValues[_index] < 0.5;
-            _index++;
-            return random;
-        }
-        public static double[] GetRandomValues()
-        {
-            double[] randomValues = new double[100];
+            double[] randomValues = new double[count];
             Random random = new Random();
-            for (int loop = 0; loop < COUNT; loop++)
+            for (int loop = 0; loop < count; loop++)
                 randomValues[loop] = random.NextDouble();
             return randomValues;
         }

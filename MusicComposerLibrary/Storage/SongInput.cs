@@ -11,7 +11,8 @@ namespace MusicComposerLibrary.Storage
         public string ScaleKeyFullName { get; set; }
         public string MelodyLowestNoteFullNameWithOctave { get; set; }
         public string MelodyHighestNoteFullNameWithOctave { get; set; }
-        public double[] Values { get; set; }
+        public double[] DurationValues { get; set; }
+        public double[] PitchValues { get; set; }
         public WeightData WeightData { get; set; }
         public int PartLength { get; set; }
         public int BeatsPerMeasure { get; set; }

@@ -20,7 +20,8 @@ namespace MusicComposer
                 PartLength = 4,
                 ScaleKeyFullName = "C",
                 SongName = songTitle,
-                Values = WeightedRandom.GetRandomValues(),
+                DurationValues = WeightedRandom.GetRandomValues(10),
+                PitchValues = WeightedRandom.GetRandomValues(10),
                 WeightData = WeightData.GetDefaults()
             };
 
