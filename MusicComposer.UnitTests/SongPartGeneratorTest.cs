@@ -9,8 +9,7 @@ namespace MusicComposer.UnitTests
     [TestClass]
     public class SongPartGeneratorTest
     {
-        private SongInput GetSongInput(int beatsPerMeasure, string scaleKeyFullName = "C",
-            string melodyLowestNoteFullNameWithOctave = null, string melodyHighestNoteFullNameWithOctave = null)
+        private SongInput GetSongInput(int beatsPerMeasure)
         {
             return new SongInput()
             {
@@ -19,9 +18,9 @@ namespace MusicComposer.UnitTests
                 BeatUnit = NoteDuration.NoteLengthType.Quarter,
                 SongName = "Test",
                 Name = "Test",
-                MelodyLowestNoteFullNameWithOctave = melodyLowestNoteFullNameWithOctave,
-                MelodyHighestNoteFullNameWithOctave = melodyHighestNoteFullNameWithOctave,
-                ScaleKeyFullName = scaleKeyFullName,
+                MelodyLowestNoteFullNameWithOctave = null,
+                MelodyHighestNoteFullNameWithOctave = null,
+                ScaleKeyFullName = "C",
                 DurationValues = WeightedRandom.GetRandomValues(10),
                 PitchValues = WeightedRandom.GetRandomValues(10),
                 WeightData = WeightData.GetDefaults(),
@@ -77,33 +76,6 @@ namespace MusicComposer.UnitTests
                     }
                 }
             }
-        }
-
-        [TestMethod]
-        public void GetLastNotePitch_StandardC_C5()
-        {
-            SongInput songData = GetSongInput(4);
-            SongPartGenerator generator = new SongPartGenerator(songData);
-            NotePitch pitch = generator.GetLastNotePitch();
-            Assert.AreEqual("C5", pitch.FullNameWithOctave);
-        }
-
-        [TestMethod]
-        public void GetLastNotePitch_StandardB_B4()
-        {
-            SongInput songData = GetSongInput(4, scaleKeyFullName: "B");
-            SongPartGenerator generator = new SongPartGenerator(songData);
-            NotePitch pitch = generator.GetLastNotePitch();
-            Assert.AreEqual("B4", pitch.FullNameWithOctave);
-        }
-
-        [TestMethod]
-        public void GetLastNotePitch_FromC3toC4KeyE_E3()
-        {
-            SongInput songData = GetSongInput(4, scaleKeyFullName: "E", melodyLowestNoteFullNameWithOctave: "C3", melodyHighestNoteFullNameWithOctave: "C4");
-            SongPartGenerator generator = new SongPartGenerator(songData);
-            NotePitch pitch = generator.GetLastNotePitch();
-            Assert.AreEqual("E3", pitch.FullNameWithOctave);
         }
 
         [TestMethod]

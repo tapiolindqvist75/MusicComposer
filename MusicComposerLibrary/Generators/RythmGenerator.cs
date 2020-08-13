@@ -23,6 +23,10 @@ namespace MusicComposerLibrary.Generators
         private readonly Weights _weights;
         public RythmGenerator(WeightedRandom weightedRandom, Weights weights, int partLength, int beatsPerMeasure, Structures.NoteDuration.NoteLengthType beatUnit)
         {
+            if (beatsPerMeasure <= 0)
+                throw new ArgumentException($"{nameof(beatsPerMeasure)} must be positive value");
+            if (partLength <= 0)
+                throw new ArgumentException($"{nameof(partLength)} must be positive value");
             _weightedRandom = weightedRandom;
             _weights = weights;
             _partLength = partLength;
